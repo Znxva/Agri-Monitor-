@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+@layer base {
+  @media print {
+    @page {
+      margin: 2cm;
+    }
+    body {
+      background: white !important;
+    }
+    .print\:hidden {
+      display: none !important;
+    }
+    .page-break-inside-avoid {
+      page-break-inside: avoid;
+    }
+  }
+}
+
+body {
+  @apply bg-[#F8F9FA];
+}
