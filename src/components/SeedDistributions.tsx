@@ -38,6 +38,8 @@ export default function SeedDistributions({ farmers, seeds, distributions, setDi
         femaleSeedsKg: Number(newDist.femaleSeedsKg),
         plantingDate: newDist.plantingDate!,
         plantingPeriod: newDist.plantingPeriod!,
+        hasSprayingSchedule: newDist.hasSprayingSchedule || false,
+        sprayingTypes: newDist.sprayingTypes || [],
         createdAt: new Date().toISOString()
       }]);
     }
@@ -59,7 +61,9 @@ export default function SeedDistributions({ farmers, seeds, distributions, setDi
       maleSeedsKg: 0,
       femaleSeedsKg: 0,
       plantingDate: new Date().toISOString().split('T')[0],
-      plantingPeriod: 'Musim Tanam 1'
+      plantingPeriod: 'Musim Tanam 1',
+      hasSprayingSchedule: false,
+      sprayingTypes: []
     });
   };
 
@@ -98,10 +102,11 @@ export default function SeedDistributions({ farmers, seeds, distributions, setDi
             <tr className="bg-[#F8F9FA] border-b border-[#E9ECEF]">
               <th className="p-4 font-bold text-[#495057]">Tanggal Tanam</th>
               <th className="p-4 font-bold text-[#495057]">Periode</th>
-              <th className="p-4 font-bold text-[#495057]">Petani</th>
+              <th className="p-4 font-bold text-[#495057]">Petani & Lokasi</th>
               <th className="p-4 font-bold text-[#495057]">Benih (Perusahaan - Varietas)</th>
               <th className="p-4 font-bold text-[#495057]">Jantan (kg)</th>
               <th className="p-4 font-bold text-[#495057]">Betina (kg)</th>
+              <th className="p-4 font-bold text-[#495057]">Penyemprotan</th>
               <th className="p-4 font-bold text-[#495057] w-24">Aksi</th>
             </tr>
           </thead>
@@ -113,10 +118,20 @@ export default function SeedDistributions({ farmers, seeds, distributions, setDi
                 <tr key={d.id} className="border-b border-[#E9ECEF] hover:bg-[#F8F9FA]">
                   <td className="p-4">{d.plantingDate}</td>
                   <td className="p-4">{d.plantingPeriod}</td>
-                  <td className="p-4 font-medium">{farmer?.name || 'Unknown'}</td>
+                  <td className="p-4">
+                    <div className="font-bold text-[#212529]">{farmer?.name || 'Unknown'}</div>
+                    <div className="text-xs text-gray-500">{farmer ? `${farmer.village} - ${farmer.groupName}` : ''}</div>
+                  </td>
                   <td className="p-4">{seed ? `${seed.company} - ${seed.variety}` : 'Unknown'}</td>
                   <td className="p-4">{d.maleSeedsKg}</td>
                   <td className="p-4">{d.femaleSeedsKg}</td>
+                  <td className="p-4">
+                    {d.hasSprayingSchedule ? (
+                      <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium">Aktif</span>
+                    ) : (
+                      <span className="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full font-medium">Tidak</span>
+                    )}
+                  </td>
                   <td className="p-4 flex gap-2">
                     <button onClick={() => openEdit(d)} className="text-blue-500 p-2 hover:bg-blue-50 rounded-lg">
                       <Edit2 size={18} />
@@ -130,7 +145,7 @@ export default function SeedDistributions({ farmers, seeds, distributions, setDi
             })}
             {filteredDist.length === 0 && (
               <tr>
-                <td colSpan={7} className="p-8 text-center text-[#6C757D]">Belum ada data distribusi benih.</td>
+                <td colSpan={8} className="p-8 text-center text-[#6C757D]">Belum ada data distribusi benih.</td>
               </tr>
             )}
           </tbody>
@@ -149,7 +164,7 @@ export default function SeedDistributions({ farmers, seeds, distributions, setDi
                 <label className="block text-sm font-bold text-[#495057] mb-1">Petani</label>
                 <select required className="w-full px-4 py-2 border rounded-lg" value={newDist.farmerId} onChange={e => setNewDist({...newDist, farmerId: e.target.value})}>
                   <option value="">Pilih Petani...</option>
-                  {farmers.map(f => <option key={f.id} value={f.id}>{f.name} ({f.landAreaRu} ru)</option>)}
+                  {farmers.map(f => <option key={f.id} value={f.id}>{f.name} ({f.village} - {f.groupName})</option>)}
                 </select>
               </div>
               <div>
@@ -178,6 +193,45 @@ export default function SeedDistributions({ farmers, seeds, distributions, setDi
                   <label className="block text-sm font-bold text-[#495057] mb-1">Benih Betina (kg)</label>
                   <input type="number" step="0.1" required className="w-full px-4 py-2 border rounded-lg" value={newDist.femaleSeedsKg || ''} onChange={e => setNewDist({...newDist, femaleSeedsKg: Number(e.target.value)})} />
                 </div>
+              </div>
+              <div className="flex flex-col gap-2 mt-2">
+                <div className="flex items-center gap-2">
+                  <input 
+                    type="checkbox" 
+                    id="hasSprayingSchedule" 
+                    checked={newDist.hasSprayingSchedule || false} 
+                    onChange={e => setNewDist({...newDist, hasSprayingSchedule: e.target.checked, sprayingTypes: e.target.checked ? ['Roundup', 'BON Jagung', 'Gramason', 'KNO3'] : []})} 
+                    className="w-4 h-4 text-[#2D6A4F] rounded border-gray-300 focus:ring-[#2D6A4F]"
+                  />
+                  <label htmlFor="hasSprayingSchedule" className="text-sm font-medium text-[#495057]">
+                    Aktifkan Jadwal Penyemprotan (Khusus TYC)
+                  </label>
+                </div>
+                {newDist.hasSprayingSchedule && (
+                  <div className="ml-6 grid grid-cols-2 gap-2">
+                    {['Roundup', 'BON Jagung', 'Gramason', 'KNO3'].map(type => (
+                      <div key={type} className="flex items-center gap-2">
+                        <input 
+                          type="checkbox" 
+                          id={`spray-${type}`} 
+                          checked={newDist.sprayingTypes?.includes(type) || false} 
+                          onChange={e => {
+                            const current = newDist.sprayingTypes || [];
+                            if (e.target.checked) {
+                              setNewDist({...newDist, sprayingTypes: [...current, type]});
+                            } else {
+                              setNewDist({...newDist, sprayingTypes: current.filter(t => t !== type)});
+                            }
+                          }}
+                          className="w-4 h-4 text-[#2D6A4F] rounded border-gray-300 focus:ring-[#2D6A4F]"
+                        />
+                        <label htmlFor={`spray-${type}`} className="text-sm text-[#495057]">
+                          {type}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="pt-4 flex justify-end gap-3">
                 <button type="button" onClick={closeModal} className="px-6 py-2 border border-[#DEE2E6] text-[#495057] rounded-lg font-bold hover:bg-[#F8F9FA]">Batal</button>

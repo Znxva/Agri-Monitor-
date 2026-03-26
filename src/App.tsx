@@ -8,7 +8,12 @@ import {
   Package,
   ChevronRight,
   Lock,
-  Unlock
+  Unlock,
+  ClipboardCheck,
+  ClipboardList,
+  Calendar,
+  DollarSign,
+  Droplets
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useStore } from './store';
@@ -17,10 +22,17 @@ import Farmers from './components/Farmers';
 import MasterData from './components/MasterData';
 import SeedDistributions from './components/SeedDistributions';
 import FertilizerDistributions from './components/FertilizerDistributions';
+import DetasselingSchedule from './components/DetasselingSchedule';
+import DetasselingCost from './components/DetasselingCost';
+import WorkerAttendance from './components/WorkerAttendance';
+import BabatPanen from './components/BabatPanen';
 import Reports from './components/Reports';
+import SprayingSchedule from './components/SprayingSchedule';
+import SprayingAttendance from './components/SprayingAttendance';
+import SprayingCost from './components/SprayingCost';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'farmers' | 'master' | 'seeds' | 'fertilizers' | 'reports'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'farmers' | 'master' | 'seeds' | 'fertilizers' | 'detasseling_schedule' | 'detasseling_cost' | 'worker_attendance' | 'spraying_schedule' | 'spraying_cost' | 'spraying_attendance' | 'babat_panen' | 'reports'>('dashboard');
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
@@ -54,24 +66,41 @@ export default function App() {
     <div className="min-h-screen bg-[#F8F9FA] flex font-sans text-[#1A1A1A]">
       {/* Sidebar */}
       <aside className="w-64 bg-white border-r border-[#E9ECEF] flex flex-col sticky top-0 h-screen print:hidden">
-        <div className="p-6 border-bottom border-[#E9ECEF]">
+        <div className="p-6 border-b border-[#E9ECEF]">
           <div className="flex items-center gap-3 text-[#2D6A4F]">
             <Sprout size={32} />
             <h1 className="font-bold text-xl tracking-tight">AgriMonitor</h1>
           </div>
         </div>
         
-        <nav className="flex-1 p-4 space-y-2">
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           <NavItem active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} icon={<LayoutDashboard size={20} />} label="Beranda" />
+          
           {store.isLoggedIn && (
             <>
+              <div className="text-[10px] font-bold text-[#ADB5BD] mt-6 mb-2 px-3 uppercase tracking-wider">Data Utama</div>
               <NavItem active={activeTab === 'master'} onClick={() => setActiveTab('master')} icon={<Database size={20} />} label="Data Master" />
               <NavItem active={activeTab === 'farmers'} onClick={() => setActiveTab('farmers')} icon={<Users size={20} />} label="Data Petani" />
+              
+              <div className="text-[10px] font-bold text-[#ADB5BD] mt-6 mb-2 px-3 uppercase tracking-wider">Distribusi</div>
               <NavItem active={activeTab === 'seeds'} onClick={() => setActiveTab('seeds')} icon={<Sprout size={20} />} label="Distribusi Benih" />
               <NavItem active={activeTab === 'fertilizers'} onClick={() => setActiveTab('fertilizers')} icon={<Package size={20} />} label="Distribusi Pupuk" />
+              <NavItem active={activeTab === 'reports'} onClick={() => setActiveTab('reports')} icon={<FileText size={20} />} label="Laporan Distribusi" />
+              
+              <div className="text-[10px] font-bold text-[#ADB5BD] mt-6 mb-2 px-3 uppercase tracking-wider">Aktivitas Lahan</div>
+              <NavItem active={activeTab === 'detasseling_schedule'} onClick={() => setActiveTab('detasseling_schedule')} icon={<Calendar size={20} />} label="Jadwal Detasseling" />
+              <NavItem active={activeTab === 'detasseling_cost'} onClick={() => setActiveTab('detasseling_cost')} icon={<DollarSign size={20} />} label="Biaya Detasseling" />
+              <NavItem active={activeTab === 'worker_attendance'} onClick={() => setActiveTab('worker_attendance')} icon={<ClipboardList size={20} />} label="Absensi Detasseling" />
+              
+              <div className="text-[10px] font-bold text-[#ADB5BD] mt-6 mb-2 px-3 uppercase tracking-wider">Penyemprotan (TYC)</div>
+              <NavItem active={activeTab === 'spraying_schedule'} onClick={() => setActiveTab('spraying_schedule')} icon={<Droplets size={20} />} label="Jadwal Penyemprotan" />
+              <NavItem active={activeTab === 'spraying_cost'} onClick={() => setActiveTab('spraying_cost')} icon={<DollarSign size={20} />} label="Biaya Penyemprotan" />
+              <NavItem active={activeTab === 'spraying_attendance'} onClick={() => setActiveTab('spraying_attendance')} icon={<ClipboardList size={20} />} label="Absensi Penyemprotan" />
+
+              <div className="text-[10px] font-bold text-[#ADB5BD] mt-6 mb-2 px-3 uppercase tracking-wider">Panen</div>
+              <NavItem active={activeTab === 'babat_panen'} onClick={() => setActiveTab('babat_panen')} icon={<ClipboardCheck size={20} />} label="Babat & Panen" />
             </>
           )}
-          <NavItem active={activeTab === 'reports'} onClick={() => setActiveTab('reports')} icon={<FileText size={20} />} label="Laporan" />
         </nav>
 
         <div className="p-4 border-t border-[#E9ECEF] space-y-4">
@@ -98,6 +127,13 @@ export default function App() {
               {activeTab === 'farmers' && 'Manajemen Petani'}
               {activeTab === 'seeds' && 'Distribusi Benih'}
               {activeTab === 'fertilizers' && 'Distribusi Pupuk'}
+              {activeTab === 'detasseling_schedule' && 'Pemantauan Jadwal Detasseling'}
+              {activeTab === 'detasseling_cost' && 'Pendataan Biaya Detasseling'}
+              {activeTab === 'worker_attendance' && 'Absensi Pekerja Detasseling'}
+              {activeTab === 'spraying_schedule' && 'Pemantauan Jadwal Penyemprotan'}
+              {activeTab === 'spraying_cost' && 'Pendataan Biaya Penyemprotan'}
+              {activeTab === 'spraying_attendance' && 'Absensi Pekerja Penyemprotan'}
+              {activeTab === 'babat_panen' && 'Pemantauan Babat Slambur & Panen'}
               {activeTab === 'reports' && 'Laporan Distribusi'}
             </h2>
           </div>
@@ -112,11 +148,18 @@ export default function App() {
             transition={{ duration: 0.2 }}
             className="min-h-full"
           >
-            {activeTab === 'dashboard' && <Dashboard farmers={store.farmers} seeds={store.seeds} fertilizers={store.fertilizers} seedDistributions={store.seedDistributions} fertilizerDistributions={store.fertilizerDistributions} />}
-            {activeTab === 'master' && store.isLoggedIn && <MasterData seeds={store.seeds} setSeeds={store.setSeeds} fertilizers={store.fertilizers} setFertilizers={store.setFertilizers} />}
-            {activeTab === 'farmers' && store.isLoggedIn && <Farmers farmers={store.farmers} setFarmers={store.setFarmers} />}
+            {activeTab === 'dashboard' && <Dashboard farmers={store.farmers} seeds={store.seeds} fertilizers={store.fertilizers} seedDistributions={store.seedDistributions} fertilizerDistributions={store.fertilizerDistributions} detasselingRecords={store.detasselingRecords} sprayingRecords={store.sprayingRecords} />}
+            {activeTab === 'master' && store.isLoggedIn && <MasterData seeds={store.seeds} setSeeds={store.setSeeds} fertilizers={store.fertilizers} setFertilizers={store.setFertilizers} villages={store.villages} setVillages={store.setVillages} groups={store.groups} setGroups={store.setGroups} />}
+            {activeTab === 'farmers' && store.isLoggedIn && <Farmers farmers={store.farmers} setFarmers={store.setFarmers} villages={store.villages} groups={store.groups} />}
             {activeTab === 'seeds' && store.isLoggedIn && <SeedDistributions farmers={store.farmers} seeds={store.seeds} distributions={store.seedDistributions} setDistributions={store.setSeedDistributions} />}
             {activeTab === 'fertilizers' && store.isLoggedIn && <FertilizerDistributions farmers={store.farmers} seeds={store.seeds} fertilizers={store.fertilizers} seedDistributions={store.seedDistributions} fertilizerDistributions={store.fertilizerDistributions} setFertilizerDistributions={store.setFertilizerDistributions} />}
+            {activeTab === 'detasseling_schedule' && store.isLoggedIn && <DetasselingSchedule farmers={store.farmers} seeds={store.seeds} seedDistributions={store.seedDistributions} detasselingRecords={store.detasselingRecords} setDetasselingRecords={store.setDetasselingRecords} />}
+            {activeTab === 'detasseling_cost' && store.isLoggedIn && <DetasselingCost farmers={store.farmers} seeds={store.seeds} seedDistributions={store.seedDistributions} detasselingRecords={store.detasselingRecords} setDetasselingRecords={store.setDetasselingRecords} />}
+            {activeTab === 'worker_attendance' && store.isLoggedIn && <WorkerAttendance farmers={store.farmers} seeds={store.seeds} seedDistributions={store.seedDistributions} detasselingRecords={store.detasselingRecords} />}
+            {activeTab === 'spraying_schedule' && store.isLoggedIn && <SprayingSchedule farmers={store.farmers} seeds={store.seeds} seedDistributions={store.seedDistributions} sprayingRecords={store.sprayingRecords} setSprayingRecords={store.setSprayingRecords} />}
+            {activeTab === 'spraying_cost' && store.isLoggedIn && <SprayingCost farmers={store.farmers} seeds={store.seeds} seedDistributions={store.seedDistributions} sprayingRecords={store.sprayingRecords} setSprayingRecords={store.setSprayingRecords} />}
+            {activeTab === 'spraying_attendance' && store.isLoggedIn && <SprayingAttendance farmers={store.farmers} seeds={store.seeds} seedDistributions={store.seedDistributions} sprayingRecords={store.sprayingRecords} />}
+            {activeTab === 'babat_panen' && store.isLoggedIn && <BabatPanen farmers={store.farmers} seeds={store.seeds} seedDistributions={store.seedDistributions} setSeedDistributions={store.setSeedDistributions} />}
             {activeTab === 'reports' && <Reports farmers={store.farmers} seeds={store.seeds} fertilizers={store.fertilizers} seedDistributions={store.seedDistributions} fertilizerDistributions={store.fertilizerDistributions} />}
           </motion.div>
         </AnimatePresence>

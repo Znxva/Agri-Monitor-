@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { SeedMaster, FertilizerMaster } from '../types';
+import { SeedMaster, FertilizerMaster, VillageMaster, GroupMaster } from '../types';
 import { Plus, Trash2, Edit2, X } from 'lucide-react';
 
 interface Props {
@@ -7,14 +7,24 @@ interface Props {
   setSeeds: (s: SeedMaster[]) => void;
   fertilizers: FertilizerMaster[];
   setFertilizers: (f: FertilizerMaster[]) => void;
+  villages: VillageMaster[];
+  setVillages: (v: VillageMaster[]) => void;
+  groups: GroupMaster[];
+  setGroups: (g: GroupMaster[]) => void;
 }
 
-export default function MasterData({ seeds, setSeeds, fertilizers, setFertilizers }: Props) {
-  const [newSeed, setNewSeed] = useState({ company: '', variety: '' });
+export default function MasterData({ seeds, setSeeds, fertilizers, setFertilizers, villages, setVillages, groups, setGroups }: Props) {
+  const [newSeed, setNewSeed] = useState<{company: string, variety: string, detasseling1Days?: number, maleSlashingDays?: number, harvestDays?: number}>({ company: '', variety: '', detasseling1Days: undefined, maleSlashingDays: undefined, harvestDays: undefined });
   const [editingSeedId, setEditingSeedId] = useState<string | null>(null);
 
   const [newFertilizer, setNewFertilizer] = useState({ name: '' });
   const [editingFertId, setEditingFertId] = useState<string | null>(null);
+
+  const [newVillage, setNewVillage] = useState({ name: '' });
+  const [editingVillageId, setEditingVillageId] = useState<string | null>(null);
+
+  const [newGroup, setNewGroup] = useState({ name: '' });
+  const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
 
   const addOrUpdateSeed = (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,7 +36,7 @@ export default function MasterData({ seeds, setSeeds, fertilizers, setFertilizer
     } else {
       setSeeds([...seeds, { id: crypto.randomUUID(), ...newSeed }]);
     }
-    setNewSeed({ company: '', variety: '' });
+    setNewSeed({ company: '', variety: '', detasseling1Days: undefined, maleSlashingDays: undefined, harvestDays: undefined });
   };
 
   const addOrUpdateFertilizer = (e: React.FormEvent) => {
@@ -42,9 +52,35 @@ export default function MasterData({ seeds, setSeeds, fertilizers, setFertilizer
     setNewFertilizer({ name: '' });
   };
 
+  const addOrUpdateVillage = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newVillage.name) return;
+    
+    if (editingVillageId) {
+      setVillages(villages.map(v => v.id === editingVillageId ? { ...v, ...newVillage } : v));
+      setEditingVillageId(null);
+    } else {
+      setVillages([...villages, { id: crypto.randomUUID(), ...newVillage }]);
+    }
+    setNewVillage({ name: '' });
+  };
+
+  const addOrUpdateGroup = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newGroup.name) return;
+    
+    if (editingGroupId) {
+      setGroups(groups.map(g => g.id === editingGroupId ? { ...g, ...newGroup } : g));
+      setEditingGroupId(null);
+    } else {
+      setGroups([...groups, { id: crypto.randomUUID(), ...newGroup }]);
+    }
+    setNewGroup({ name: '' });
+  };
+
   const editSeed = (s: SeedMaster) => {
     setEditingSeedId(s.id);
-    setNewSeed({ company: s.company, variety: s.variety });
+    setNewSeed({ company: s.company, variety: s.variety, detasseling1Days: s.detasseling1Days, maleSlashingDays: s.maleSlashingDays, harvestDays: s.harvestDays });
   };
 
   const editFertilizer = (f: FertilizerMaster) => {
@@ -54,12 +90,22 @@ export default function MasterData({ seeds, setSeeds, fertilizers, setFertilizer
 
   const cancelSeedEdit = () => {
     setEditingSeedId(null);
-    setNewSeed({ company: '', variety: '' });
+    setNewSeed({ company: '', variety: '', detasseling1Days: undefined, maleSlashingDays: undefined, harvestDays: undefined });
   };
 
   const cancelFertEdit = () => {
     setEditingFertId(null);
     setNewFertilizer({ name: '' });
+  };
+
+  const cancelVillageEdit = () => {
+    setEditingVillageId(null);
+    setNewVillage({ name: '' });
+  };
+
+  const cancelGroupEdit = () => {
+    setEditingGroupId(null);
+    setNewGroup({ name: '' });
   };
 
   return (
@@ -68,37 +114,65 @@ export default function MasterData({ seeds, setSeeds, fertilizers, setFertilizer
         {/* Seeds Master */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-[#E9ECEF]">
           <h3 className="text-lg font-bold text-[#212529] mb-4">Data Master Benih</h3>
-          <form onSubmit={addOrUpdateSeed} className="flex gap-2 mb-4">
-            <input 
-              type="text" 
-              placeholder="Perusahaan (e.g. Syngenta)" 
-              className="flex-1 px-3 py-2 border rounded-lg"
-              value={newSeed.company}
-              onChange={e => setNewSeed({...newSeed, company: e.target.value})}
-            />
-            <input 
-              type="text" 
-              placeholder="Varietas (e.g. TYC)" 
-              className="flex-1 px-3 py-2 border rounded-lg"
-              value={newSeed.variety}
-              onChange={e => setNewSeed({...newSeed, variety: e.target.value})}
-            />
-            {editingSeedId ? (
-              <div className="flex gap-1">
-                <button type="submit" className="bg-blue-600 text-white p-2 rounded-lg"><Edit2 size={20} /></button>
-                <button type="button" onClick={cancelSeedEdit} className="bg-gray-400 text-white p-2 rounded-lg"><X size={20} /></button>
-              </div>
-            ) : (
-              <button type="submit" className="bg-[#2D6A4F] text-white p-2 rounded-lg">
-                <Plus size={20} />
-              </button>
-            )}
+          <form onSubmit={addOrUpdateSeed} className="flex flex-col gap-3 mb-4">
+            <div className="flex gap-2">
+              <input 
+                type="text" 
+                placeholder="Perusahaan (e.g. Syngenta)" 
+                className="flex-1 px-3 py-2 border rounded-lg"
+                value={newSeed.company}
+                onChange={e => setNewSeed({...newSeed, company: e.target.value})}
+              />
+              <input 
+                type="text" 
+                placeholder="Varietas (e.g. TYC)" 
+                className="flex-1 px-3 py-2 border rounded-lg"
+                value={newSeed.variety}
+                onChange={e => setNewSeed({...newSeed, variety: e.target.value})}
+              />
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <input 
+                type="number" 
+                placeholder="HST Detasseling 1" 
+                className="w-full px-3 py-2 border rounded-lg"
+                value={newSeed.detasseling1Days || ''}
+                onChange={e => setNewSeed({...newSeed, detasseling1Days: e.target.value ? Number(e.target.value) : undefined})}
+              />
+              <input 
+                type="number" 
+                placeholder="HST Babat Jantan" 
+                className="w-full px-3 py-2 border rounded-lg"
+                value={newSeed.maleSlashingDays || ''}
+                onChange={e => setNewSeed({...newSeed, maleSlashingDays: e.target.value ? Number(e.target.value) : undefined})}
+              />
+              <input 
+                type="number" 
+                placeholder="HST Panen" 
+                className="w-full px-3 py-2 border rounded-lg"
+                value={newSeed.harvestDays || ''}
+                onChange={e => setNewSeed({...newSeed, harvestDays: e.target.value ? Number(e.target.value) : undefined})}
+              />
+              {editingSeedId ? (
+                <div className="flex gap-1 justify-end">
+                  <button type="submit" className="bg-blue-600 text-white p-2 rounded-lg flex-1 flex justify-center items-center"><Edit2 size={20} /></button>
+                  <button type="button" onClick={cancelSeedEdit} className="bg-gray-400 text-white p-2 rounded-lg flex-1 flex justify-center items-center"><X size={20} /></button>
+                </div>
+              ) : (
+                <button type="submit" className="bg-[#2D6A4F] text-white p-2 rounded-lg w-full flex justify-center items-center">
+                  <Plus size={20} />
+                </button>
+              )}
+            </div>
           </form>
           <div className="space-y-2">
             {seeds.map(s => (
               <div key={s.id} className="flex justify-between items-center p-3 bg-[#F8F9FA] rounded-lg">
                 <div>
-                  <span className="font-bold">{s.company}</span> - {s.variety}
+                  <div className="font-bold">{s.company} - {s.variety}</div>
+                  <div className="text-xs text-gray-500">
+                    Detasseling 1: {s.detasseling1Days ? `${s.detasseling1Days} HST` : '-'} | Babat Jantan: {s.maleSlashingDays ? `${s.maleSlashingDays} HST` : '-'} | Panen: {s.harvestDays ? `${s.harvestDays} HST` : '-'}
+                  </div>
                 </div>
                 <div className="flex gap-2">
                   <button onClick={() => editSeed(s)} className="text-blue-500"><Edit2 size={16} /></button>
@@ -143,6 +217,77 @@ export default function MasterData({ seeds, setSeeds, fertilizers, setFertilizer
               </div>
             ))}
             {fertilizers.length === 0 && <p className="text-sm text-gray-500">Belum ada data pupuk.</p>}
+          </div>
+        </div>
+        {/* Villages Master */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-[#E9ECEF]">
+          <h3 className="text-lg font-bold text-[#212529] mb-4">Data Master Desa</h3>
+          <form onSubmit={addOrUpdateVillage} className="flex gap-2 mb-4">
+            <input 
+              type="text" 
+              placeholder="Nama Desa" 
+              className="flex-1 px-3 py-2 border rounded-lg"
+              value={newVillage.name}
+              onChange={e => setNewVillage({name: e.target.value})}
+            />
+            {editingVillageId ? (
+              <div className="flex gap-1">
+                <button type="submit" className="bg-blue-600 text-white p-2 rounded-lg"><Edit2 size={20} /></button>
+                <button type="button" onClick={cancelVillageEdit} className="bg-gray-400 text-white p-2 rounded-lg"><X size={20} /></button>
+              </div>
+            ) : (
+              <button type="submit" className="bg-[#2D6A4F] text-white p-2 rounded-lg">
+                <Plus size={20} />
+              </button>
+            )}
+          </form>
+          <div className="space-y-2 max-h-64 overflow-y-auto">
+            {villages.map(v => (
+              <div key={v.id} className="flex justify-between items-center p-3 bg-[#F8F9FA] rounded-lg">
+                <span className="font-bold">{v.name}</span>
+                <div className="flex gap-2">
+                  <button onClick={() => { setEditingVillageId(v.id); setNewVillage({ name: v.name }); }} className="text-blue-500"><Edit2 size={16} /></button>
+                  <button onClick={() => setVillages(villages.filter(x => x.id !== v.id))} className="text-red-500"><Trash2 size={16} /></button>
+                </div>
+              </div>
+            ))}
+            {villages.length === 0 && <p className="text-sm text-gray-500">Belum ada data desa.</p>}
+          </div>
+        </div>
+
+        {/* Groups Master */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-[#E9ECEF]">
+          <h3 className="text-lg font-bold text-[#212529] mb-4">Data Master Kelompok Tani</h3>
+          <form onSubmit={addOrUpdateGroup} className="flex gap-2 mb-4">
+            <input 
+              type="text" 
+              placeholder="Nama Kelompok Tani" 
+              className="flex-1 px-3 py-2 border rounded-lg"
+              value={newGroup.name}
+              onChange={e => setNewGroup({name: e.target.value})}
+            />
+            {editingGroupId ? (
+              <div className="flex gap-1">
+                <button type="submit" className="bg-blue-600 text-white p-2 rounded-lg"><Edit2 size={20} /></button>
+                <button type="button" onClick={cancelGroupEdit} className="bg-gray-400 text-white p-2 rounded-lg"><X size={20} /></button>
+              </div>
+            ) : (
+              <button type="submit" className="bg-[#2D6A4F] text-white p-2 rounded-lg">
+                <Plus size={20} />
+              </button>
+            )}
+          </form>
+          <div className="space-y-2 max-h-64 overflow-y-auto">
+            {groups.map(g => (
+              <div key={g.id} className="flex justify-between items-center p-3 bg-[#F8F9FA] rounded-lg">
+                <span className="font-bold">{g.name}</span>
+                <div className="flex gap-2">
+                  <button onClick={() => { setEditingGroupId(g.id); setNewGroup({ name: g.name }); }} className="text-blue-500"><Edit2 size={16} /></button>
+                  <button onClick={() => setGroups(groups.filter(x => x.id !== g.id))} className="text-red-500"><Trash2 size={16} /></button>
+                </div>
+              </div>
+            ))}
+            {groups.length === 0 && <p className="text-sm text-gray-500">Belum ada data kelompok.</p>}
           </div>
         </div>
       </div>

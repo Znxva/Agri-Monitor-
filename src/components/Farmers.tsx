@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
-import { Farmer } from '../types';
+import { Farmer, VillageMaster, GroupMaster } from '../types';
 import { Plus, Trash2, Search, Edit2 } from 'lucide-react';
 
 interface Props {
   farmers: Farmer[];
   setFarmers: (f: Farmer[]) => void;
+  villages: VillageMaster[];
+  groups: GroupMaster[];
 }
 
-export default function Farmers({ farmers, setFarmers }: Props) {
+export default function Farmers({ farmers, setFarmers, villages, groups }: Props) {
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -17,6 +19,12 @@ export default function Farmers({ farmers, setFarmers }: Props) {
     groupName: '',
     landAreaRu: 0
   });
+
+  const closeModal = () => {
+    setShowModal(false);
+    setEditingId(null);
+    setNewFarmer({ name: '', village: '', groupName: '', landAreaRu: 0 });
+  };
 
   const handleAddOrEdit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,10 +51,10 @@ export default function Farmers({ farmers, setFarmers }: Props) {
     setShowModal(true);
   };
 
-  const closeModal = () => {
-    setShowModal(false);
+  const openAdd = () => {
     setEditingId(null);
     setNewFarmer({ name: '', village: '', groupName: '', landAreaRu: 0 });
+    setShowModal(true);
   };
 
   const filtered = farmers.filter(f => 
@@ -71,7 +79,7 @@ export default function Farmers({ farmers, setFarmers }: Props) {
             />
           </div>
           <button 
-            onClick={() => setShowModal(true)}
+            onClick={openAdd}
             className="bg-[#2D6A4F] text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-[#1B4332] transition-colors"
           >
             <Plus size={20} />
@@ -131,11 +139,25 @@ export default function Farmers({ farmers, setFarmers }: Props) {
               </div>
               <div>
                 <label className="block text-sm font-bold text-[#495057] mb-1">Desa</label>
-                <input type="text" required className="w-full px-4 py-2 border rounded-lg" value={newFarmer.village} onChange={e => setNewFarmer({...newFarmer, village: e.target.value})} />
+                {villages.length > 0 ? (
+                  <select required className="w-full px-4 py-2 border rounded-lg" value={newFarmer.village} onChange={e => setNewFarmer({...newFarmer, village: e.target.value})}>
+                    <option value="" disabled>Pilih Desa</option>
+                    {villages.map(v => <option key={v.id} value={v.name}>{v.name}</option>)}
+                  </select>
+                ) : (
+                  <input type="text" required className="w-full px-4 py-2 border rounded-lg" placeholder="Masukkan nama desa" value={newFarmer.village} onChange={e => setNewFarmer({...newFarmer, village: e.target.value})} />
+                )}
               </div>
               <div>
                 <label className="block text-sm font-bold text-[#495057] mb-1">Kelompok Tani</label>
-                <input type="text" required className="w-full px-4 py-2 border rounded-lg" value={newFarmer.groupName} onChange={e => setNewFarmer({...newFarmer, groupName: e.target.value})} />
+                {groups.length > 0 ? (
+                  <select required className="w-full px-4 py-2 border rounded-lg" value={newFarmer.groupName} onChange={e => setNewFarmer({...newFarmer, groupName: e.target.value})}>
+                    <option value="" disabled>Pilih Kelompok Tani</option>
+                    {groups.map(g => <option key={g.id} value={g.name}>{g.name}</option>)}
+                  </select>
+                ) : (
+                  <input type="text" required className="w-full px-4 py-2 border rounded-lg" placeholder="Masukkan nama kelompok" value={newFarmer.groupName} onChange={e => setNewFarmer({...newFarmer, groupName: e.target.value})} />
+                )}
               </div>
               <div>
                 <label className="block text-sm font-bold text-[#495057] mb-1">Luas Lahan (ru)</label>

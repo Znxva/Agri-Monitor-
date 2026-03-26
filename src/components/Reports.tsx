@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Farmer, SeedMaster, FertilizerMaster, SeedDistribution, FertilizerDistribution } from '../types';
-import { Printer, Filter } from 'lucide-react';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import { Printer, Filter, Eye, ArrowLeft } from 'lucide-react';
+import { format, parseISO } from 'date-fns';
 
 interface Props {
   farmers: Farmer[];
@@ -19,6 +18,7 @@ export default function Reports({ farmers, seeds, fertilizers, seedDistributions
   const [filterVariety, setFilterVariety] = useState('');
   const [filterVillage, setFilterVillage] = useState('');
   const [filterGroup, setFilterGroup] = useState('');
+  const [showPrintPreview, setShowPrintPreview] = useState(false);
 
   const dates = Array.from(new Set(seedDistributions.map(d => d.plantingDate))).filter(Boolean).sort();
   const periods = Array.from(new Set(seedDistributions.map(d => d.plantingPeriod))).filter(Boolean);
@@ -41,127 +41,103 @@ export default function Reports({ farmers, seeds, fertilizers, seedDistributions
     return true;
   });
 
-  const printReport = () => {
-    const doc = new jsPDF('landscape');
-
-    doc.setFontSize(16);
-    doc.text('Laporan Distribusi Benih & Pupuk', 14, 15);
-
-    doc.setFontSize(10);
-    const filters = [];
-    if (filterDate) filters.push(`Tanggal: ${filterDate}`);
-    if (filterPeriod) filters.push(`Periode: ${filterPeriod}`);
-    if (filterCompany) filters.push(`Benih: ${filterCompany}`);
-    if (filterVariety) filters.push(`Varietas: ${filterVariety}`);
-    if (filterVillage) filters.push(`Desa: ${filterVillage}`);
-    if (filterGroup) filters.push(`Kelompok: ${filterGroup}`);
-    
-    if (filters.length > 0) {
-      doc.text(filters.join(' | '), 14, 22);
-    } else {
-      doc.text('Semua Data', 14, 22);
-    }
-
-    const tableData = filteredSeedDist.map(sd => {
+  // Group the filtered data by Village and Group
+  const groupedData = useMemo<Record<string, SeedDistribution[]>>(() => {
+    const grouped: Record<string, SeedDistribution[]> = {};
+    filteredSeedDist.forEach(sd => {
       const farmer = farmers.find(f => f.id === sd.farmerId);
-      const seed = seeds.find(s => s.id === sd.seedId);
-      const ferts = fertilizerDistributions.filter(fd => fd.seedDistributionId === sd.id);
-      
-      const fertText = ferts.length > 0 
-        ? ferts.map(f => {
-            const fertMaster = fertilizers.find(fm => fm.id === f.fertilizerId);
-            return `• ${fertMaster?.name}: ${f.amountKg}kg (${f.stage}) - ${f.status}${f.notes ? `\n  Catatan: ${f.notes}` : ''}`;
-          }).join('\n')
-        : '-';
-
-      return [
-        farmer?.name || '-',
-        farmer?.village || '-',
-        farmer?.groupName || '-',
-        farmer?.landAreaRu?.toString() || '-',
-        `${seed?.company || '-'} - ${seed?.variety || '-'}`,
-        sd.maleSeedsKg.toString(),
-        sd.femaleSeedsKg.toString(),
-        fertText
-      ];
-    });
-
-    autoTable(doc, {
-      startY: 28,
-      head: [['Petani', 'Desa', 'Kelompok', 'Luas (ru)', 'Benih', 'Jantan (kg)', 'Betina (kg)', 'Pupuk Diterima & Catatan']],
-      body: tableData,
-      theme: 'grid',
-      styles: { 
-        fontSize: 8, 
-        cellPadding: 3,
-        lineColor: [222, 226, 230],
-        lineWidth: 0.1,
-        textColor: [33, 37, 41]
-      },
-      headStyles: { 
-        fillColor: [248, 249, 250],
-        textColor: [73, 80, 87],
-        fontStyle: 'bold'
-      },
-      alternateRowStyles: {
-        fillColor: [255, 255, 255]
-      },
-      columnStyles: {
-        7: { cellWidth: 80 }
+      const village = farmer?.village || 'Unknown Village';
+      const group = farmer?.groupName || 'Unknown Group';
+      const key = `${village} - ${group}`;
+      if (!grouped[key]) {
+        grouped[key] = [];
       }
+      grouped[key].push(sd);
     });
+    
+    // Sort keys
+    const sortedKeys = Object.keys(grouped).sort();
+    const sortedGrouped: Record<string, SeedDistribution[]> = {};
+    sortedKeys.forEach(key => {
+      sortedGrouped[key] = grouped[key];
+    });
+    
+    return sortedGrouped;
+  }, [filteredSeedDist, farmers]);
 
-    doc.save('Laporan_Distribusi.pdf');
+  const printReport = () => {
+    window.print();
   };
 
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center mb-6 print:hidden">
-        <h2 className="text-2xl font-bold text-[#212529]">Laporan Distribusi</h2>
-        <button 
-          onClick={printReport}
-          className="bg-[#2D6A4F] text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-[#1B4332] transition-colors shadow-sm"
-        >
-          <Printer size={20} />
-          Cetak Laporan (PDF)
-        </button>
-      </div>
+      {!showPrintPreview ? (
+        <>
+          <div className="flex justify-between items-center mb-6 print:hidden">
+            <h2 className="text-2xl font-bold text-[#212529]">Laporan Distribusi</h2>
+            <button 
+              onClick={() => setShowPrintPreview(true)}
+              className="bg-[#2D6A4F] text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-[#1B4332] transition-colors shadow-sm"
+            >
+              <Eye size={20} />
+              Preview Cetak
+            </button>
+          </div>
 
-      {/* Filters */}
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-[#E9ECEF] mb-6 print:hidden">
-        <div className="flex items-center gap-2 mb-3 text-[#495057] font-bold">
-          <Filter size={18} />
-          <h3>Filter Laporan</h3>
+          {/* Filters */}
+          <div className="bg-white p-4 rounded-xl shadow-sm border border-[#E9ECEF] mb-6 print:hidden">
+            <div className="flex items-center gap-2 mb-3 text-[#495057] font-bold">
+              <Filter size={18} />
+              <h3>Filter Laporan</h3>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              <select className="px-3 py-2 border rounded-lg text-sm" value={filterDate} onChange={e => setFilterDate(e.target.value)}>
+                <option value="">Semua Tanggal</option>
+                {dates.map(d => <option key={d} value={d}>{d}</option>)}
+              </select>
+              <select className="px-3 py-2 border rounded-lg text-sm" value={filterPeriod} onChange={e => setFilterPeriod(e.target.value)}>
+                <option value="">Semua Periode</option>
+                {periods.map(p => <option key={p} value={p}>{p}</option>)}
+              </select>
+              <select className="px-3 py-2 border rounded-lg text-sm" value={filterCompany} onChange={e => setFilterCompany(e.target.value)}>
+                <option value="">Semua Jenis Benih</option>
+                {companies.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+              <select className="px-3 py-2 border rounded-lg text-sm" value={filterVariety} onChange={e => setFilterVariety(e.target.value)}>
+                <option value="">Semua Varietas</option>
+                {varieties.map(v => <option key={v} value={v}>{v}</option>)}
+              </select>
+              <select className="px-3 py-2 border rounded-lg text-sm" value={filterVillage} onChange={e => setFilterVillage(e.target.value)}>
+                <option value="">Semua Desa</option>
+                {villages.map(v => <option key={v} value={v}>{v}</option>)}
+              </select>
+              <select className="px-3 py-2 border rounded-lg text-sm" value={filterGroup} onChange={e => setFilterGroup(e.target.value)}>
+                <option value="">Semua Kelompok</option>
+                {groups.map(g => <option key={g} value={g}>{g}</option>)}
+              </select>
+            </div>
+          </div>
+        </>
+      ) : (
+        <div className="mb-6 flex justify-between items-center print:hidden bg-white p-4 rounded-xl shadow-sm border border-[#E9ECEF]">
+          <button 
+            onClick={() => setShowPrintPreview(false)}
+            className="text-[#495057] hover:text-[#212529] flex items-center gap-2 font-medium"
+          >
+            <ArrowLeft size={20} />
+            Kembali
+          </button>
+          <button 
+            onClick={printReport}
+            className="bg-[#2D6A4F] text-white px-6 py-2 rounded-lg flex items-center gap-2 hover:bg-[#1B4332] transition-colors shadow-sm font-bold"
+          >
+            <Printer size={20} />
+            Cetak Sekarang
+          </button>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          <select className="px-3 py-2 border rounded-lg text-sm" value={filterDate} onChange={e => setFilterDate(e.target.value)}>
-            <option value="">Semua Tanggal</option>
-            {dates.map(d => <option key={d} value={d}>{d}</option>)}
-          </select>
-          <select className="px-3 py-2 border rounded-lg text-sm" value={filterPeriod} onChange={e => setFilterPeriod(e.target.value)}>
-            <option value="">Semua Periode</option>
-            {periods.map(p => <option key={p} value={p}>{p}</option>)}
-          </select>
-          <select className="px-3 py-2 border rounded-lg text-sm" value={filterCompany} onChange={e => setFilterCompany(e.target.value)}>
-            <option value="">Semua Jenis Benih</option>
-            {companies.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
-          <select className="px-3 py-2 border rounded-lg text-sm" value={filterVariety} onChange={e => setFilterVariety(e.target.value)}>
-            <option value="">Semua Varietas</option>
-            {varieties.map(v => <option key={v} value={v}>{v}</option>)}
-          </select>
-          <select className="px-3 py-2 border rounded-lg text-sm" value={filterVillage} onChange={e => setFilterVillage(e.target.value)}>
-            <option value="">Semua Desa</option>
-            {villages.map(v => <option key={v} value={v}>{v}</option>)}
-          </select>
-          <select className="px-3 py-2 border rounded-lg text-sm" value={filterGroup} onChange={e => setFilterGroup(e.target.value)}>
-            <option value="">Semua Kelompok</option>
-            {groups.map(g => <option key={g} value={g}>{g}</option>)}
-          </select>
-        </div>
-      </div>
+      )}
 
-      <div className="bg-white rounded-xl shadow-sm border border-[#E9ECEF] p-8 print:shadow-none print:border-none print:p-0">
+      <div className={`bg-white rounded-xl shadow-sm border border-[#E9ECEF] p-8 ${showPrintPreview ? 'print:shadow-none print:border-none print:p-0' : ''}`}>
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-[#212529] uppercase tracking-wider">Laporan Distribusi Benih & Pupuk</h1>
           <div className="text-[#6C757D] mt-2 text-sm flex flex-wrap justify-center gap-2">
@@ -175,62 +151,66 @@ export default function Reports({ farmers, seeds, fertilizers, seedDistributions
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-sm print:text-xs">
-            <thead>
-              <tr className="bg-[#F8F9FA] border-b-2 border-[#DEE2E6] print:bg-transparent">
-                <th className="p-3 font-bold text-[#495057] border border-[#DEE2E6]">Petani</th>
-                <th className="p-3 font-bold text-[#495057] border border-[#DEE2E6]">Desa</th>
-                <th className="p-3 font-bold text-[#495057] border border-[#DEE2E6]">Kelompok</th>
-                <th className="p-3 font-bold text-[#495057] border border-[#DEE2E6]">Luas (ru)</th>
-                <th className="p-3 font-bold text-[#495057] border border-[#DEE2E6]">Benih</th>
-                <th className="p-3 font-bold text-[#495057] border border-[#DEE2E6]">Jantan (kg)</th>
-                <th className="p-3 font-bold text-[#495057] border border-[#DEE2E6]">Betina (kg)</th>
-                <th className="p-3 font-bold text-[#495057] border border-[#DEE2E6]">Pupuk Diterima & Catatan</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredSeedDist.map(sd => {
-                const farmer = farmers.find(f => f.id === sd.farmerId);
-                const seed = seeds.find(s => s.id === sd.seedId);
-                const ferts = fertilizerDistributions.filter(fd => fd.seedDistributionId === sd.id);
-                
-                return (
-                  <tr key={sd.id} className="border-b border-[#E9ECEF] page-break-inside-avoid">
-                    <td className="p-3 border border-[#DEE2E6] font-medium">{farmer?.name}</td>
-                    <td className="p-3 border border-[#DEE2E6]">{farmer?.village}</td>
-                    <td className="p-3 border border-[#DEE2E6]">{farmer?.groupName}</td>
-                    <td className="p-3 border border-[#DEE2E6] text-center">{farmer?.landAreaRu}</td>
-                    <td className="p-3 border border-[#DEE2E6]">{seed?.company} - {seed?.variety}</td>
-                    <td className="p-3 border border-[#DEE2E6] text-center">{sd.maleSeedsKg}</td>
-                    <td className="p-3 border border-[#DEE2E6] text-center">{sd.femaleSeedsKg}</td>
-                    <td className="p-3 border border-[#DEE2E6]">
-                      {ferts.length > 0 ? (
-                        <ul className="list-disc list-inside space-y-1">
-                          {ferts.map(f => {
-                            const fertMaster = fertilizers.find(fm => fm.id === f.fertilizerId);
-                            return (
-                              <li key={f.id} className="leading-tight">
-                                <span>{fertMaster?.name}: {f.amountKg}kg ({f.stage}) - <span className="italic font-medium">{f.status}</span></span>
-                                {f.notes && <span className="block text-[10px] text-gray-500 ml-4 mt-0.5">Catatan: {f.notes}</span>}
-                              </li>
-                            );
-                          })}
-                        </ul>
-                      ) : (
-                        <span className="text-gray-400 italic text-xs">-</span>
-                      )}
-                    </td>
+        <div className="overflow-x-auto space-y-8">
+          {Object.entries(groupedData).map(([groupKey, distributions]) => (
+            <div key={groupKey} className="page-break-inside-avoid">
+              <h3 className="text-lg font-bold text-[#2D6A4F] mb-3 border-b-2 border-[#2D6A4F] pb-1 inline-block">{groupKey}</h3>
+              <table className="w-full text-left border-collapse text-sm">
+                <thead>
+                  <tr className="bg-[#F8F9FA] border-b-2 border-[#DEE2E6]">
+                    <th className="p-3 font-bold text-[#495057] border border-[#DEE2E6]">Tanggal</th>
+                    <th className="p-3 font-bold text-[#495057] border border-[#DEE2E6]">Petani</th>
+                    <th className="p-3 font-bold text-[#495057] border border-[#DEE2E6]">Luas (ru)</th>
+                    <th className="p-3 font-bold text-[#495057] border border-[#DEE2E6]">Benih</th>
+                    <th className="p-3 font-bold text-[#495057] border border-[#DEE2E6]">Jantan (kg)</th>
+                    <th className="p-3 font-bold text-[#495057] border border-[#DEE2E6]">Betina (kg)</th>
+                    <th className="p-3 font-bold text-[#495057] border border-[#DEE2E6]">Pupuk Diterima & Catatan</th>
                   </tr>
-                );
-              })}
-              {filteredSeedDist.length === 0 && (
-                <tr>
-                  <td colSpan={8} className="p-8 text-center text-[#6C757D] border border-[#DEE2E6]">Belum ada data distribusi yang sesuai dengan filter.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                </thead>
+                <tbody>
+                  {(distributions as SeedDistribution[]).map(sd => {
+                    const farmer = farmers.find(f => f.id === sd.farmerId);
+                    const seed = seeds.find(s => s.id === sd.seedId);
+                    const ferts = fertilizerDistributions.filter(fd => fd.seedDistributionId === sd.id);
+                    
+                    return (
+                      <tr key={sd.id} className="border-b border-[#E9ECEF] page-break-inside-avoid">
+                        <td className="p-3 border border-[#DEE2E6]">{format(parseISO(sd.plantingDate), 'dd MMM yyyy')}</td>
+                        <td className="p-3 border border-[#DEE2E6] font-medium">{farmer?.name}</td>
+                        <td className="p-3 border border-[#DEE2E6]">{farmer?.landAreaRu}</td>
+                        <td className="p-3 border border-[#DEE2E6]">{seed?.company} - {seed?.variety}</td>
+                        <td className="p-3 border border-[#DEE2E6] font-bold text-blue-600">{sd.maleSeedsKg}</td>
+                        <td className="p-3 border border-[#DEE2E6] font-bold text-pink-600">{sd.femaleSeedsKg}</td>
+                        <td className="p-3 border border-[#DEE2E6]">
+                          {ferts.length > 0 ? (
+                            <ul className="list-disc list-inside space-y-1">
+                              {ferts.map(fd => {
+                                const fert = fertilizers.find(f => f.id === fd.fertilizerId);
+                                return (
+                                  <li key={fd.id} className="text-xs">
+                                    <span className="font-bold">{fert?.name}</span>: {fd.amountKg}kg 
+                                    {fd.notes && <span className="block text-gray-500 italic ml-4">- {fd.notes}</span>}
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          ) : (
+                            <span className="text-gray-400 italic text-xs">Belum ada pupuk</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ))}
+          
+          {Object.keys(groupedData).length === 0 && (
+            <div className="text-center py-12 text-gray-500 border-2 border-dashed border-gray-300 rounded-xl">
+              Tidak ada data distribusi yang sesuai dengan filter.
+            </div>
+          )}
         </div>
       </div>
     </div>

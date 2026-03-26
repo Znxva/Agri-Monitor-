@@ -3,10 +3,12 @@
 @layer base {
   @media print {
     @page {
-      margin: 2cm;
+      margin: 1.5cm;
     }
     body {
       background: white !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
     }
     .print\:hidden {
       display: none !important;
