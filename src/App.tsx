@@ -104,6 +104,17 @@ export default function App() {
         </nav>
 
         <div className="p-4 border-t border-[#E9ECEF] space-y-4">
+          <div className="flex items-center justify-center gap-2 text-xs font-medium">
+            {store.syncStatus === 'connecting' && (
+              <><span className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></span> <span className="text-yellow-700">Menyinkronkan...</span></>
+            )}
+            {store.syncStatus === 'synced' && (
+              <><span className="w-2 h-2 rounded-full bg-green-500"></span> <span className="text-green-700">Tersinkronisasi</span></>
+            )}
+            {store.syncStatus === 'error' && (
+              <><span className="w-2 h-2 rounded-full bg-red-500"></span> <span className="text-red-700">Gagal Sinkronisasi</span></>
+            )}
+          </div>
           {store.isLoggedIn ? (
             <button onClick={handleLogout} className="flex items-center justify-center gap-2 text-red-600 hover:bg-red-50 w-full p-2 rounded-lg transition-colors font-medium">
               <Unlock size={18} /> Logout Admin
