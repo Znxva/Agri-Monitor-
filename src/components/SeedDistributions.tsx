@@ -23,6 +23,8 @@ export default function SeedDistributions({ farmers, seeds, distributions, setDi
 
   const [filterPeriod, setFilterPeriod] = useState('');
 
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
   const handleAddOrEdit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newDist.farmerId || !newDist.seedId || !newDist.plantingDate || !newDist.plantingPeriod) return;
@@ -136,7 +138,7 @@ export default function SeedDistributions({ farmers, seeds, distributions, setDi
                     <button onClick={() => openEdit(d)} className="text-blue-500 p-2 hover:bg-blue-50 rounded-lg">
                       <Edit2 size={18} />
                     </button>
-                    <button onClick={() => setDistributions(distributions.filter(x => x.id !== d.id))} className="text-red-500 p-2 hover:bg-red-50 rounded-lg">
+                    <button onClick={() => setDeleteConfirmId(d.id)} className="text-red-500 p-2 hover:bg-red-50 rounded-lg">
                       <Trash2 size={18} />
                     </button>
                   </td>
@@ -238,6 +240,21 @@ export default function SeedDistributions({ farmers, seeds, distributions, setDi
                 <button type="submit" className="px-6 py-2 bg-[#2D6A4F] text-white rounded-lg font-bold hover:bg-[#1B4332]">{editingId ? 'Update' : 'Simpan'}</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {deleteConfirmId && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-xl p-6">
+            <h3 className="text-xl font-bold text-[#212529] mb-2">Hapus Data</h3>
+            <p className="text-[#495057] mb-6">Apakah Anda yakin ingin menghapus data distribusi benih ini?</p>
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setDeleteConfirmId(null)} className="px-4 py-2 border border-[#DEE2E6] text-[#495057] rounded-lg font-bold hover:bg-[#F8F9FA]">Batal</button>
+              <button onClick={() => {
+                setDistributions(distributions.filter(x => x.id !== deleteConfirmId));
+                setDeleteConfirmId(null);
+              }} className="px-4 py-2 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700">Hapus</button>
+            </div>
           </div>
         </div>
       )}

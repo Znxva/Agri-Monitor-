@@ -24,6 +24,7 @@ export default function DetasselingSchedule({ farmers, seeds, seedDistributions,
   const [filterVariety, setFilterVariety] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [showPrintPreview, setShowPrintPreview] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
     date: format(new Date(), 'yyyy-MM-dd'),
@@ -163,9 +164,7 @@ export default function DetasselingSchedule({ farmers, seeds, seedDistributions,
   };
 
   const deleteRecord = (id: string) => {
-    if (confirm('Hapus catatan detasseling ini?')) {
-      setDetasselingRecords(detasselingRecords.filter(r => r.id !== id));
-    }
+    setDeleteConfirmId(id);
   };
 
   const handlePrint = () => {
@@ -505,6 +504,21 @@ export default function DetasselingSchedule({ farmers, seeds, seedDistributions,
                   ))}
                 </tbody>
               </table>
+            </div>
+          </div>
+        )}
+        {deleteConfirmId && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-xl p-6">
+              <h3 className="text-xl font-bold text-[#212529] mb-2">Hapus Data</h3>
+              <p className="text-[#495057] mb-6">Apakah Anda yakin ingin menghapus catatan detasseling ini?</p>
+              <div className="flex justify-end gap-3">
+                <button onClick={() => setDeleteConfirmId(null)} className="px-4 py-2 border border-[#DEE2E6] text-[#495057] rounded-lg font-bold hover:bg-[#F8F9FA]">Batal</button>
+                <button onClick={() => {
+                  setDetasselingRecords(detasselingRecords.filter(r => r.id !== deleteConfirmId));
+                  setDeleteConfirmId(null);
+                }} className="px-4 py-2 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700">Hapus</button>
+              </div>
             </div>
           </div>
         )}

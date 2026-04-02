@@ -30,6 +30,7 @@ export default function FertilizerDistributions({ farmers, seeds, fertilizers, s
   const [filterCompany, setFilterCompany] = useState('');
   const [filterVariety, setFilterVariety] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   const activePlantings = useMemo(() => {
     return seedDistributions.map(dist => {
@@ -232,9 +233,9 @@ export default function FertilizerDistributions({ farmers, seeds, fertilizers, s
                         {p.ferts.map(fd => {
                           const fert = fertilizers.find(f => f.id === fd.fertilizerId);
                           return (
-                            <div key={fd.id} className="bg-white border rounded-lg p-2 relative group shadow-sm">
+                            <div key={fd.id} className="bg-white border rounded-lg p-3 relative shadow-sm">
                               <div className="flex justify-between items-start mb-1">
-                                <div className="font-bold text-[#212529] text-sm">{fert?.name} <span className="text-[#2D6A4F]">({fd.amountKg} kg)</span></div>
+                                <div className="font-bold text-[#212529] text-sm pr-16">{fert?.name} <span className="text-[#2D6A4F]">({fd.amountKg} kg)</span></div>
                                 <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                                   fd.status === 'Bantuan' ? 'bg-green-100 text-green-800' :
                                   fd.status === 'Pinjaman' ? 'bg-yellow-100 text-yellow-800' :
@@ -246,13 +247,9 @@ export default function FertilizerDistributions({ farmers, seeds, fertilizers, s
                               <div className="text-xs text-gray-500">Tahap: {fd.stage}</div>
                               {fd.notes && <div className="text-xs text-gray-600 italic mt-1">"{fd.notes}"</div>}
                               
-                              <div className="absolute top-1 right-1 flex gap-1 bg-white rounded shadow-sm border opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onClick={() => openEdit(fd)} className="p-1 text-blue-600 hover:bg-blue-50 rounded"><Edit2 size={12} /></button>
-                                <button onClick={() => {
-                                  if (confirm('Hapus catatan pupuk ini?')) {
-                                    setFertilizerDistributions(fertilizerDistributions.filter(x => x.id !== fd.id));
-                                  }
-                                }} className="p-1 text-red-600 hover:bg-red-50 rounded"><Trash2 size={12} /></button>
+                              <div className="mt-3 flex justify-end gap-3 border-t border-[#E9ECEF] pt-2">
+                                <button onClick={() => openEdit(fd)} className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-medium"><Edit2 size={14} /> Edit</button>
+                                <button onClick={() => setDeleteConfirmId(fd.id)} className="flex items-center gap-1 text-xs text-red-600 hover:text-red-800 font-medium"><Trash2 size={14} /> Hapus</button>
                               </div>
                             </div>
                           );
@@ -339,6 +336,21 @@ export default function FertilizerDistributions({ farmers, seeds, fertilizers, s
                 <button type="submit" className="px-6 py-2 bg-[#2D6A4F] text-white rounded-lg font-bold hover:bg-[#1B4332]">{editingId ? 'Update' : 'Simpan'}</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {deleteConfirmId && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-xl p-6">
+            <h3 className="text-xl font-bold text-[#212529] mb-2">Hapus Data</h3>
+            <p className="text-[#495057] mb-6">Apakah Anda yakin ingin menghapus data distribusi pupuk ini?</p>
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setDeleteConfirmId(null)} className="px-4 py-2 border border-[#DEE2E6] text-[#495057] rounded-lg font-bold hover:bg-[#F8F9FA]">Batal</button>
+              <button onClick={() => {
+                setFertilizerDistributions(fertilizerDistributions.filter(x => x.id !== deleteConfirmId));
+                setDeleteConfirmId(null);
+              }} className="px-4 py-2 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700">Hapus</button>
+            </div>
           </div>
         </div>
       )}

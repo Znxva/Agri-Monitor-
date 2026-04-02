@@ -14,6 +14,7 @@ export default function BabatPanen({ farmers, seeds, seedDistributions, setSeedD
   const [selectedDistId, setSelectedDistId] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState<'babat' | 'panen'>('babat');
+  const [deleteConfirmInfo, setDeleteConfirmInfo] = useState<{ id: string, type: 'babat' | 'panen' } | null>(null);
   
   const [formData, setFormData] = useState({
     date: format(new Date(), 'yyyy-MM-dd'),
@@ -68,15 +69,7 @@ export default function BabatPanen({ farmers, seeds, seedDistributions, setSeedD
   };
 
   const undoStatus = (distId: string, type: 'babat' | 'panen') => {
-    if (confirm(`Batalkan status ${type === 'babat' ? 'Babat Slambur' : 'Panen'}?`)) {
-      setSeedDistributions(seedDistributions.map(d => {
-        if (d.id === distId) {
-          if (type === 'babat') return { ...d, babatSlamburDone: false, babatSlamburDate: undefined };
-          if (type === 'panen') return { ...d, harvestDone: false, harvestDate: undefined };
-        }
-        return d;
-      }));
-    }
+    setDeleteConfirmInfo({ id: distId, type });
   };
 
   return (
@@ -191,6 +184,27 @@ export default function BabatPanen({ farmers, seeds, seedDistributions, setSeedD
                 <button type="submit" className="px-6 py-2 bg-[#2D6A4F] text-white rounded-lg font-bold hover:bg-[#1B4332]">Simpan</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {deleteConfirmInfo && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-xl p-6">
+            <h3 className="text-xl font-bold text-[#212529] mb-2">Batalkan Status</h3>
+            <p className="text-[#495057] mb-6">Apakah Anda yakin ingin membatalkan status {deleteConfirmInfo.type === 'babat' ? 'Babat Slambur' : 'Panen'}?</p>
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setDeleteConfirmInfo(null)} className="px-4 py-2 border border-[#DEE2E6] text-[#495057] rounded-lg font-bold hover:bg-[#F8F9FA]">Batal</button>
+              <button onClick={() => {
+                setSeedDistributions(seedDistributions.map(d => {
+                  if (d.id === deleteConfirmInfo.id) {
+                    if (deleteConfirmInfo.type === 'babat') return { ...d, babatSlamburDone: false, babatSlamburDate: undefined };
+                    if (deleteConfirmInfo.type === 'panen') return { ...d, harvestDone: false, harvestDate: undefined };
+                  }
+                  return d;
+                }));
+                setDeleteConfirmInfo(null);
+              }} className="px-4 py-2 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700">Batalkan</button>
+            </div>
           </div>
         </div>
       )}
