@@ -77,11 +77,11 @@ export default function SeedDistributions({ farmers, seeds, distributions, setDi
 
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <h2 className="text-2xl font-bold text-[#212529]">Distribusi Benih</h2>
-        <div className="flex gap-4">
+        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
           <select 
-            className="px-4 py-2 border rounded-lg"
+            className="px-4 py-2 border rounded-lg w-full sm:w-auto"
             value={filterPeriod}
             onChange={e => setFilterPeriod(e.target.value)}
           >
@@ -90,7 +90,7 @@ export default function SeedDistributions({ farmers, seeds, distributions, setDi
           </select>
           <button 
             onClick={() => setShowModal(true)}
-            className="bg-[#2D6A4F] text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-[#1B4332] transition-colors"
+            className="bg-[#2D6A4F] text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-[#1B4332] transition-colors w-full sm:w-auto"
           >
             <Plus size={20} />
             Catat Distribusi Benih
@@ -99,7 +99,8 @@ export default function SeedDistributions({ farmers, seeds, distributions, setDi
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-[#E9ECEF] overflow-hidden">
-        <table className="w-full text-left border-collapse">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse whitespace-nowrap">
           <thead>
             <tr className="bg-[#F8F9FA] border-b border-[#E9ECEF]">
               <th className="p-4 font-bold text-[#495057]">Tanggal Tanam</th>
@@ -152,6 +153,7 @@ export default function SeedDistributions({ farmers, seeds, distributions, setDi
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       {showModal && (

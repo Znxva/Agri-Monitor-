@@ -188,7 +188,7 @@ export default function FertilizerDistributions({ farmers, seeds, fertilizers, s
 
       <div className="bg-white rounded-xl shadow-sm border border-[#E9ECEF] overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-sm">
+          <table className="w-full text-left border-collapse text-sm whitespace-nowrap">
             <thead>
               <tr className="bg-[#F8F9FA] border-b-2 border-[#DEE2E6]">
                 <th className="p-4 font-bold text-[#495057] border border-[#DEE2E6]">Petani & Lokasi</th>
