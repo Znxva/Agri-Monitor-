@@ -1,16 +1,23 @@
 import React, { useState } from 'react';
-import { Farmer, VillageMaster, GroupMaster } from '../types';
-import { Plus, Trash2, Search, Edit2 } from 'lucide-react';
+import { Farmer, VillageMaster, GroupMaster, SeedMaster, FertilizerMaster, SeedDistribution, FertilizerDistribution } from '../types';
+import { Plus, Trash2, Search, Edit2, Eye } from 'lucide-react';
+import { differenceInDays, addDays, parseISO, format } from 'date-fns';
 
 interface Props {
   farmers: Farmer[];
   setFarmers: (f: Farmer[]) => void;
   villages: VillageMaster[];
   groups: GroupMaster[];
+  seeds: SeedMaster[];
+  fertilizers: FertilizerMaster[];
+  seedDistributions: SeedDistribution[];
+  fertilizerDistributions: FertilizerDistribution[];
 }
 
-export default function Farmers({ farmers, setFarmers, villages, groups }: Props) {
+export default function Farmers({ farmers, setFarmers, villages, groups, seeds, fertilizers, seedDistributions, fertilizerDistributions }: Props) {
   const [showModal, setShowModal] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedFarmer, setSelectedFarmer] = useState<Farmer | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [newFarmer, setNewFarmer] = useState<Partial<Farmer>>({
@@ -55,6 +62,11 @@ export default function Farmers({ farmers, setFarmers, villages, groups }: Props
     setEditingId(null);
     setNewFarmer({ name: '', village: '', groupName: '', landAreaRu: 0 });
     setShowModal(true);
+  };
+
+  const openDetail = (f: Farmer) => {
+    setSelectedFarmer(f);
+    setShowDetailModal(true);
   };
 
   const filtered = farmers.filter(f => 
@@ -107,6 +119,9 @@ export default function Farmers({ farmers, setFarmers, villages, groups }: Props
                 <td className="p-4">{f.groupName}</td>
                 <td className="p-4">{f.landAreaRu}</td>
                 <td className="p-4 flex gap-2">
+                  <button onClick={() => openDetail(f)} className="text-green-600 p-2 hover:bg-green-50 rounded-lg" title="Lihat Detail">
+                    <Eye size={18} />
+                  </button>
                   <button onClick={() => openEdit(f)} className="text-blue-500 p-2 hover:bg-blue-50 rounded-lg">
                     <Edit2 size={18} />
                   </button>
@@ -168,6 +183,90 @@ export default function Farmers({ farmers, setFarmers, villages, groups }: Props
                 <button type="submit" className="px-6 py-2 bg-[#2D6A4F] text-white rounded-lg font-bold hover:bg-[#1B4332]">{editingId ? 'Update' : 'Simpan'}</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {showDetailModal && selectedFarmer && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-xl flex flex-col">
+            <div className="p-6 border-b border-[#E9ECEF] flex justify-between items-center bg-[#F8F9FA]">
+              <h3 className="text-xl font-bold text-[#212529]">Detail Profil Petani</h3>
+              <button onClick={() => setShowDetailModal(false)} className="text-[#6C757D] hover:text-[#212529]">✕</button>
+            </div>
+            <div className="p-6 overflow-y-auto flex-1">
+              <div className="grid grid-cols-2 gap-4 mb-6 bg-gray-50 p-4 rounded-xl border border-gray-200">
+                <div>
+                  <p className="text-sm text-gray-500">Nama Petani</p>
+                  <p className="font-bold text-lg">{selectedFarmer.name}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Desa / Kelompok</p>
+                  <p className="font-bold text-lg">{selectedFarmer.village} / {selectedFarmer.groupName}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Luas Lahan</p>
+                  <p className="font-bold text-lg">{selectedFarmer.landAreaRu} ru</p>
+                </div>
+              </div>
+
+              <h4 className="font-bold text-lg mb-4 text-[#2D6A4F] border-b pb-2">Riwayat Penanaman & Pupuk</h4>
+              
+              <div className="space-y-6">
+                {seedDistributions.filter(sd => sd.farmerId === selectedFarmer.id).map(sd => {
+                  const seed = seeds.find(s => s.id === sd.seedId);
+                  const ferts = fertilizerDistributions.filter(fd => fd.seedDistributionId === sd.id);
+                  const plantAge = differenceInDays(new Date(), parseISO(sd.plantingDate));
+                  const estimatedHarvest = addDays(parseISO(sd.plantingDate), seed?.estimatedHarvestDays || 0);
+                  
+                  return (
+                    <div key={sd.id} className="bg-white border border-[#DEE2E6] rounded-xl overflow-hidden shadow-sm">
+                      <div className="bg-[#F8F9FA] p-4 border-b border-[#DEE2E6] grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div>
+                          <p className="text-xs text-gray-500">Tanggal Tanam</p>
+                          <p className="font-bold">{format(parseISO(sd.plantingDate), 'dd MMM yyyy')}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500">Jenis Benih</p>
+                          <p className="font-bold">{seed?.company} - {seed?.variety}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500">Umur Tanaman</p>
+                          <p className="font-bold text-blue-600">{plantAge} Hari</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500">Perkiraan Panen</p>
+                          <p className="font-bold text-green-600">{format(estimatedHarvest, 'dd MMM yyyy')}</p>
+                        </div>
+                      </div>
+                      <div className="p-4">
+                        <h5 className="font-bold text-sm mb-3 text-gray-700">Pupuk yang Diterima:</h5>
+                        {ferts.length > 0 ? (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {ferts.map(fd => {
+                              const fert = fertilizers.find(f => f.id === fd.fertilizerId);
+                              return (
+                                <div key={fd.id} className="bg-green-50 border border-green-100 p-3 rounded-lg flex justify-between items-center">
+                                  <div>
+                                    <p className="font-bold text-green-800">{fert?.name}</p>
+                                    <p className="text-xs text-green-600">Tahap: {fd.stage} | Status: {fd.status}</p>
+                                  </div>
+                                  <div className="font-bold text-lg text-green-700">{fd.amountKg} kg</div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-gray-500 italic">Belum ada pupuk yang disalurkan untuk penanaman ini.</p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+                {seedDistributions.filter(sd => sd.farmerId === selectedFarmer.id).length === 0 && (
+                  <p className="text-center text-gray-500 italic py-8">Belum ada riwayat penanaman untuk petani ini.</p>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       )}

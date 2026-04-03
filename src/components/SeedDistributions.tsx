@@ -106,6 +106,7 @@ export default function SeedDistributions({ farmers, seeds, distributions, setDi
               <th className="p-4 font-bold text-[#495057]">Tanggal Tanam</th>
               <th className="p-4 font-bold text-[#495057]">Periode</th>
               <th className="p-4 font-bold text-[#495057]">Petani & Lokasi</th>
+              <th className="p-4 font-bold text-[#495057]">Luas Lahan (ru)</th>
               <th className="p-4 font-bold text-[#495057]">Benih (Perusahaan - Varietas)</th>
               <th className="p-4 font-bold text-[#495057]">Jantan (kg)</th>
               <th className="p-4 font-bold text-[#495057]">Betina (kg)</th>
@@ -125,6 +126,7 @@ export default function SeedDistributions({ farmers, seeds, distributions, setDi
                     <div className="font-bold text-[#212529]">{farmer?.name || 'Unknown'}</div>
                     <div className="text-xs text-gray-500">{farmer ? `${farmer.village} - ${farmer.groupName}` : ''}</div>
                   </td>
+                  <td className="p-4">{farmer?.landAreaRu || '-'}</td>
                   <td className="p-4">{seed ? `${seed.company} - ${seed.variety}` : 'Unknown'}</td>
                   <td className="p-4">{d.maleSeedsKg}</td>
                   <td className="p-4">{d.femaleSeedsKg}</td>

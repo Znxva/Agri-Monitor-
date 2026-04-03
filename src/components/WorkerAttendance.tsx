@@ -458,15 +458,25 @@ export default function WorkerAttendance({ farmers, seeds, seedDistributions, de
                     <table className="w-full border-collapse border border-black text-[12px]">
                       <thead>
                         <tr className="bg-gray-100">
-                          <th className="border border-black p-2 text-center w-10">No</th>
-                          <th className="border border-black p-2 text-left w-48">Nama Pekerja</th>
+                          <th className="border border-black p-2 text-center w-8" rowSpan={2}>No</th>
+                          <th className="border border-black p-2 text-left w-40" rowSpan={2}>Nama Pekerja</th>
                           {days.map((d, i) => (
-                            <th key={i} className="border border-black p-1 text-center w-16">
+                            <th key={i} className="border border-black p-1 text-center w-16" colSpan={2}>
                               <div>{dayNames[d.getDay()]}</div>
                               <div className="font-normal">{format(d, 'dd/MM')}</div>
                             </th>
                           ))}
-                          <th className="border border-black p-2 text-center w-16">Total<br/>Hari</th>
+                          <th className="border border-black p-2 text-center w-12" rowSpan={2}>Total<br/>Hari</th>
+                          <th className="border border-black p-2 text-center w-12" rowSpan={2}>Total<br/>Lembur</th>
+                          <th className="border border-black p-2 text-center w-20" rowSpan={2}>Total<br/>Pembayaran</th>
+                        </tr>
+                        <tr className="bg-gray-100">
+                          {days.map((_, i) => (
+                            <React.Fragment key={i}>
+                              <th className="border border-black p-1 text-center text-[10px] w-8">H</th>
+                              <th className="border border-black p-1 text-center text-[10px] w-8">L</th>
+                            </React.Fragment>
+                          ))}
                         </tr>
                       </thead>
                       <tbody>
@@ -475,8 +485,13 @@ export default function WorkerAttendance({ farmers, seeds, seedDistributions, de
                             <td className="border border-black p-2 text-center h-8">{wIndex + 1}</td>
                             <td className="border border-black p-2"></td>
                             {days.map((_, i) => (
-                              <td key={i} className="border border-black p-2"></td>
+                              <React.Fragment key={i}>
+                                <td className="border border-black p-1"></td>
+                                <td className="border border-black p-1"></td>
+                              </React.Fragment>
                             ))}
+                            <td className="border border-black p-2"></td>
+                            <td className="border border-black p-2"></td>
                             <td className="border border-black p-2"></td>
                           </tr>
                         ))}
