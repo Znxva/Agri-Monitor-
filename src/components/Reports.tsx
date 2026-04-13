@@ -244,40 +244,70 @@ export default function Reports({ farmers, seeds, fertilizers, seedDistributions
               </div>
             ))
           ) : (
-            Object.entries(groupedFertData).map(([groupKey, distributions]) => (
-              <div key={groupKey} className="page-break-inside-avoid">
-                <h3 className="text-lg font-bold text-[#2D6A4F] mb-3 border-b-2 border-[#2D6A4F] pb-1 inline-block">{groupKey}</h3>
-                <table className="w-full text-left border-collapse text-sm">
-                  <thead>
-                    <tr className="bg-[#F8F9FA] border-b-2 border-[#DEE2E6]">
-                      <th className="p-3 font-bold text-[#495057] border border-[#DEE2E6]">Tanggal Distribusi</th>
-                      <th className="p-3 font-bold text-[#495057] border border-[#DEE2E6]">Petani</th>
-                      <th className="p-3 font-bold text-[#495057] border border-[#DEE2E6]">Luas Lahan (ru)</th>
-                      <th className="p-3 font-bold text-[#495057] border border-[#DEE2E6]">Jenis Jagung</th>
-                      <th className="p-3 font-bold text-[#495057] border border-[#DEE2E6]">Pupuk Diterima</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(distributions as FertilizerDistribution[]).map(fd => {
-                      const sd = seedDistributions.find(s => s.id === fd.seedDistributionId);
-                      const farmer = farmers.find(f => f.id === fd.farmerId);
-                      const seed = seeds.find(s => s.id === sd?.seedId);
-                      const fert = fertilizers.find(f => f.id === fd.fertilizerId);
-                      
-                      return (
-                        <tr key={fd.id} className="border-b border-[#E9ECEF] page-break-inside-avoid">
-                          <td className="p-3 border border-[#DEE2E6]">{format(parseISO(fd.createdAt), 'dd MMM yyyy')}</td>
-                          <td className="p-3 border border-[#DEE2E6] font-medium">{farmer?.name}</td>
-                          <td className="p-3 border border-[#DEE2E6]">{farmer?.landAreaRu}</td>
-                          <td className="p-3 border border-[#DEE2E6]">{seed?.company} - {seed?.variety}</td>
-                          <td className="p-3 border border-[#DEE2E6] font-bold text-green-600">{fert?.name} ({fd.amountKg} kg)</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            ))
+            Object.entries(groupedFertData).map(([groupKey, distributions]) => {
+              // Group by farmer
+              const farmerGroups: Record<string, FertilizerDistribution[]> = {};
+              (distributions as FertilizerDistribution[]).forEach(fd => {
+                if (!farmerGroups[fd.farmerId]) {
+                  farmerGroups[fd.farmerId] = [];
+                }
+                farmerGroups[fd.farmerId].push(fd);
+              });
+
+              const sortedFarmerIds = Object.keys(farmerGroups).sort((a, b) => {
+                const nameA = farmers.find(f => f.id === a)?.name || '';
+                const nameB = farmers.find(f => f.id === b)?.name || '';
+                return nameA.localeCompare(nameB);
+              });
+
+              return (
+                <div key={groupKey} className="page-break-inside-avoid">
+                  <h3 className="text-lg font-bold text-[#2D6A4F] mb-3 border-b-2 border-[#2D6A4F] pb-1 inline-block">{groupKey}</h3>
+                  <table className="w-full text-left border-collapse text-sm">
+                    <thead>
+                      <tr className="bg-[#F8F9FA] border-b-2 border-[#DEE2E6]">
+                        <th className="p-3 font-bold text-[#495057] border border-[#DEE2E6] w-12 text-center">No</th>
+                        <th className="p-3 font-bold text-[#495057] border border-[#DEE2E6]">Petani</th>
+                        <th className="p-3 font-bold text-[#495057] border border-[#DEE2E6] text-center">Luas (ru)</th>
+                        <th className="p-3 font-bold text-[#495057] border border-[#DEE2E6]">Jenis Jagung</th>
+                        <th className="p-3 font-bold text-[#495057] border border-[#DEE2E6]">Pupuk Diterima</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sortedFarmerIds.map((farmerId, index) => {
+                        const fds = farmerGroups[farmerId];
+                        const farmer = farmers.find(f => f.id === farmerId);
+                        // Assuming all fertilizers for this farmer in this view belong to the same seed distribution (or we just take the first one for the seed info)
+                        const sd = seedDistributions.find(s => s.id === fds[0].seedDistributionId);
+                        const seed = seeds.find(s => s.id === sd?.seedId);
+                        
+                        return (
+                          <tr key={farmerId} className="border-b border-[#E9ECEF] page-break-inside-avoid">
+                            <td className="p-3 border border-[#DEE2E6] text-center">{index + 1}</td>
+                            <td className="p-3 border border-[#DEE2E6] font-bold">{farmer?.name}</td>
+                            <td className="p-3 border border-[#DEE2E6] text-center">{farmer?.landAreaRu}</td>
+                            <td className="p-3 border border-[#DEE2E6]">{seed?.company} - {seed?.variety}</td>
+                            <td className="p-3 border border-[#DEE2E6]">
+                              <ul className="list-disc list-inside space-y-1">
+                                {fds.map(fd => {
+                                  const fert = fertilizers.find(f => f.id === fd.fertilizerId);
+                                  return (
+                                    <li key={fd.id} className="text-green-700 font-medium">
+                                      {format(parseISO(fd.createdAt), 'dd/MM/yyyy')} : {fert?.name} ({fd.amountKg} kg)
+                                      {fd.notes && <span className="text-gray-600 font-normal ml-1 italic">({fd.notes})</span>}
+                                    </li>
+                                  );
+                                })}
+                              </ul>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              );
+            })
           )}
           
           {reportType === 'seed' && Object.keys(groupedData).length === 0 && (

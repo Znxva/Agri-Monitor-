@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Farmer, SeedMaster, FertilizerMaster, SeedDistribution, FertilizerDistribution } from '../types';
 import { Plus, Trash2, Edit2, Filter, Printer } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, differenceInDays } from 'date-fns';
 
 interface Props {
   farmers: Farmer[];
@@ -41,6 +41,11 @@ export default function FertilizerDistributions({ farmers, seeds, fertilizers, s
       const seed = seeds.find(s => s.id === dist.seedId);
       const ferts = fertilizerDistributions.filter(fd => fd.seedDistributionId === dist.id);
       
+      let plantAge = 0;
+      if (dist.plantingDate) {
+        plantAge = differenceInDays(new Date(), parseISO(dist.plantingDate));
+      }
+
       return {
         ...dist,
         farmerName: farmer?.name || 'Unknown',
@@ -49,6 +54,7 @@ export default function FertilizerDistributions({ farmers, seeds, fertilizers, s
         seedCompany: seed?.company || 'Unknown',
         seedVariety: seed?.variety || 'Unknown',
         seedName: seed ? `${seed.company} - ${seed.variety}` : 'Unknown',
+        plantAge,
         ferts
       };
     }).sort((a, b) => new Date(b.plantingDate).getTime() - new Date(a.plantingDate).getTime());
@@ -215,36 +221,66 @@ export default function FertilizerDistributions({ farmers, seeds, fertilizers, s
           <table className="w-full text-left border-collapse border border-black text-sm">
             <thead>
               <tr className="bg-gray-100">
-                <th className="border border-black p-2">No</th>
+                <th className="border border-black p-2 w-12 text-center">No</th>
                 <th className="border border-black p-2">Petani</th>
-                <th className="border border-black p-2">Luas Lahan (ru)</th>
+                <th className="border border-black p-2 text-center">Luas Lahan (ru)</th>
                 <th className="border border-black p-2">Jenis Jagung</th>
                 <th className="border border-black p-2">Pupuk Diterima</th>
-                <th className="border border-black p-2">Tahap</th>
               </tr>
             </thead>
             <tbody>
-              {printData.map((fd, index) => {
-                const dist = seedDistributions.find(d => d.id === fd.seedDistributionId);
-                const farmer = farmers.find(f => f.id === fd.farmerId);
-                const seed = seeds.find(s => s.id === dist?.seedId);
-                const fert = fertilizers.find(f => f.id === fd.fertilizerId);
-                return (
-                  <tr key={fd.id}>
-                    <td className="border border-black p-2 text-center">{index + 1}</td>
-                    <td className="border border-black p-2">{farmer?.name}</td>
-                    <td className="border border-black p-2">{farmer?.landAreaRu}</td>
-                    <td className="border border-black p-2">{seed?.company} - {seed?.variety}</td>
-                    <td className="border border-black p-2 font-bold">{fert?.name} ({fd.amountKg} kg)</td>
-                    <td className="border border-black p-2">{fd.stage}</td>
-                  </tr>
-                );
-              })}
-              {printData.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="border border-black p-4 text-center text-gray-500">Tidak ada data distribusi pada tanggal ini.</td>
-                </tr>
-              )}
+              {(() => {
+                const farmerGroups: Record<string, typeof printData> = {};
+                printData.forEach(fd => {
+                  if (!farmerGroups[fd.farmerId]) {
+                    farmerGroups[fd.farmerId] = [];
+                  }
+                  farmerGroups[fd.farmerId].push(fd);
+                });
+
+                const sortedFarmerIds = Object.keys(farmerGroups).sort((a, b) => {
+                  const nameA = farmers.find(f => f.id === a)?.name || '';
+                  const nameB = farmers.find(f => f.id === b)?.name || '';
+                  return nameA.localeCompare(nameB);
+                });
+
+                if (sortedFarmerIds.length === 0) {
+                  return (
+                    <tr>
+                      <td colSpan={5} className="border border-black p-4 text-center text-gray-500">Tidak ada data distribusi pada tanggal ini.</td>
+                    </tr>
+                  );
+                }
+
+                return sortedFarmerIds.map((farmerId, index) => {
+                  const fds = farmerGroups[farmerId];
+                  const farmer = farmers.find(f => f.id === farmerId);
+                  const dist = seedDistributions.find(d => d.id === fds[0].seedDistributionId);
+                  const seed = seeds.find(s => s.id === dist?.seedId);
+
+                  return (
+                    <tr key={farmerId}>
+                      <td className="border border-black p-2 text-center">{index + 1}</td>
+                      <td className="border border-black p-2 font-bold">{farmer?.name}</td>
+                      <td className="border border-black p-2 text-center">{farmer?.landAreaRu}</td>
+                      <td className="border border-black p-2">{seed?.company} - {seed?.variety}</td>
+                      <td className="border border-black p-2">
+                        <ul className="list-disc list-inside space-y-1">
+                          {fds.map(fd => {
+                            const fert = fertilizers.find(f => f.id === fd.fertilizerId);
+                            return (
+                              <li key={fd.id} className="text-green-700 font-medium">
+                                {fert?.name} ({fd.amountKg} kg) - Tahap: {fd.stage}
+                                {fd.notes && <span className="text-gray-600 font-normal ml-1 italic">({fd.notes})</span>}
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </td>
+                    </tr>
+                  );
+                });
+              })()}
             </tbody>
           </table>
         </div>
@@ -307,6 +343,7 @@ export default function FertilizerDistributions({ farmers, seeds, fertilizers, s
                 <th className="p-4 font-bold text-[#495057] border border-[#DEE2E6]">Petani & Lokasi</th>
                 <th className="p-4 font-bold text-[#495057] border border-[#DEE2E6]">Luas Lahan (ru)</th>
                 <th className="p-4 font-bold text-[#495057] border border-[#DEE2E6]">Benih & Tgl Tanam</th>
+                <th className="p-4 font-bold text-[#495057] border border-[#DEE2E6] text-center">Umur (HST)</th>
                 <th className="p-4 font-bold text-[#495057] border border-[#DEE2E6]">Status Pupuk</th>
                 <th className="p-4 font-bold text-[#495057] border border-[#DEE2E6]">Riwayat Pupuk</th>
               </tr>
@@ -326,6 +363,9 @@ export default function FertilizerDistributions({ farmers, seeds, fertilizers, s
                   <td className="p-4 border border-[#DEE2E6]">
                     <div className="font-bold text-[#2D6A4F]">{p.seedName}</div>
                     <div className="text-xs text-gray-500">Tanam: {format(parseISO(p.plantingDate), 'dd MMM yyyy')}</div>
+                  </td>
+                  <td className="p-4 border border-[#DEE2E6] text-center font-bold text-blue-600">
+                    {p.plantAge}
                   </td>
                   <td className="p-4 border border-[#DEE2E6]">
                     {p.ferts.length > 0 ? (
@@ -383,7 +423,7 @@ export default function FertilizerDistributions({ farmers, seeds, fertilizers, s
             })}
               {filteredPlantings.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="p-8 text-center text-[#6C757D] border border-[#DEE2E6]">Belum ada data penanaman yang sesuai filter.</td>
+                  <td colSpan={6} className="p-8 text-center text-[#6C757D] border border-[#DEE2E6]">Belum ada data penanaman yang sesuai filter.</td>
                 </tr>
               )}
             </tbody>
