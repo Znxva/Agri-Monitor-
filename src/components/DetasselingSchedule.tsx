@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Farmer, SeedMaster, SeedDistribution, DetasselingRecord } from '../types';
 import { Calendar, X, Edit2, Printer, Filter, Download } from 'lucide-react';
-import { addDays, format, parseISO } from 'date-fns';
+import { addDays, format, parseISO, differenceInDays } from 'date-fns';
 
 interface Props {
   farmers: Farmer[];
@@ -44,8 +44,10 @@ export default function DetasselingSchedule({ farmers, seeds, seedDistributions,
       let estMaleSlashing_raw = '';
       let estHarvest = '-';
       let estHarvest_raw = '';
+      let plantAge = 0;
       
       if (seed && dist.plantingDate) {
+        plantAge = differenceInDays(new Date(), parseISO(dist.plantingDate));
         if (seed.detasseling1Days) {
           const d1Date = addDays(parseISO(dist.plantingDate), seed.detasseling1Days);
           estDetasseling1 = format(d1Date, 'dd MMM yyyy');
@@ -68,9 +70,11 @@ export default function DetasselingSchedule({ farmers, seeds, seedDistributions,
         farmerName: farmer?.name || 'Unknown',
         village: farmer?.village || 'Unknown',
         groupName: farmer?.groupName || 'Unknown',
+        landAreaRu: farmer?.landAreaRu || 0,
         seedCompany: seed?.company || 'Unknown',
         seedVariety: seed?.variety || 'Unknown',
         seedName: seed ? `${seed.company} - ${seed.variety}` : 'Unknown',
+        plantAge,
         estDetasseling1,
         estDetasseling1_raw,
         estMaleSlashing,
@@ -172,10 +176,11 @@ export default function DetasselingSchedule({ farmers, seeds, seedDistributions,
   };
 
   const downloadCSV = () => {
-    const headers = ['No', 'Nama Petani', 'Desa / Kelompok', 'Perusahaan / Varietas', 'Tgl Tanam', 'Est. Cabut 1', 'Cabut 2', 'Cabut 3', 'Babat Jantan', 'Est. Panen'];
+    const headers = ['No', 'Nama Petani', 'Luas Lahan (ru)', 'Desa / Kelompok', 'Perusahaan / Varietas', 'Tgl Tanam', 'Est. Cabut 1', 'Cabut 2', 'Cabut 3', 'Babat Jantan', 'Est. Panen'];
     const rows = filteredPlantings.map((p, i) => [
       i + 1,
       p.farmerName,
+      p.landAreaRu,
       `${p.village} / ${p.groupName}`,
       `${p.seedCompany} / ${p.seedVariety}`,
       format(parseISO(p.plantingDate), 'dd/MM/yyyy'),
@@ -281,7 +286,9 @@ export default function DetasselingSchedule({ farmers, seeds, seedDistributions,
               <thead>
                 <tr className="bg-[#E9ECEF] text-[#495057] text-sm uppercase tracking-wider">
                   <th className="p-4 font-bold border-b">Petani & Lahan</th>
+                  <th className="p-4 font-bold border-b">Luas Lahan (ru)</th>
                   <th className="p-4 font-bold border-b">Varietas & Tgl Tanam</th>
+                  <th className="p-4 font-bold border-b text-center">Umur (HST)</th>
                   <th className="p-4 font-bold border-b text-center w-48">Detasseling 1</th>
                   <th className="p-4 font-bold border-b text-center w-48">Detasseling 2</th>
                   <th className="p-4 font-bold border-b text-center w-48">Detasseling 3</th>
@@ -300,8 +307,14 @@ export default function DetasselingSchedule({ farmers, seeds, seedDistributions,
                         <div className="text-xs text-gray-500">{planting.village} - {planting.groupName}</div>
                       </td>
                       <td className="p-4">
+                        {planting.landAreaRu}
+                      </td>
+                      <td className="p-4">
                         <div className="font-bold text-[#2D6A4F]">{planting.seedName}</div>
                         <div className="text-xs text-gray-500">Tanam: {format(parseISO(planting.plantingDate), 'dd MMM yyyy')}</div>
+                      </td>
+                      <td className="p-4 text-center font-bold text-blue-600">
+                        {planting.plantAge}
                       </td>
 
                       {/* Detasseling 1 */}
@@ -366,7 +379,7 @@ export default function DetasselingSchedule({ farmers, seeds, seedDistributions,
                 })}
                 {filteredPlantings.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="p-8 text-center text-gray-500">Tidak ada data penanaman yang sesuai filter.</td>
+                    <td colSpan={7} className="p-8 text-center text-gray-500">Tidak ada data penanaman yang sesuai filter.</td>
                   </tr>
                 )}
               </tbody>
@@ -463,6 +476,7 @@ export default function DetasselingSchedule({ farmers, seeds, seedDistributions,
                   <tr className="bg-gray-100">
                     <th className="border border-black p-2 text-center w-8">No</th>
                     <th className="border border-black p-2">Nama Petani</th>
+                    <th className="border border-black p-2 text-center">Luas Lahan (ru)</th>
                     <th className="border border-black p-2">Desa / Kelompok</th>
                     <th className="border border-black p-2">Perusahaan / Varietas</th>
                     <th className="border border-black p-2 text-center">Tgl Tanam</th>
@@ -478,6 +492,7 @@ export default function DetasselingSchedule({ farmers, seeds, seedDistributions,
                     <tr key={planting.id}>
                       <td className="border border-black p-2 text-center">{index + 1}</td>
                       <td className="border border-black p-2 font-bold">{planting.farmerName}</td>
+                      <td className="border border-black p-2 text-center">{planting.landAreaRu}</td>
                       <td className="border border-black p-2">
                         {planting.village}<br/>
                         <span className="text-[9px] text-gray-600">{planting.groupName}</span>

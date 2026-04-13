@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Farmer, SeedMaster, SeedDistribution, SprayingRecord } from '../types';
 import { Calendar, X, Edit2, Printer, Filter, Download, Droplets } from 'lucide-react';
-import { addDays, format, parseISO } from 'date-fns';
+import { addDays, format, parseISO, differenceInDays } from 'date-fns';
 
 interface Props {
   farmers: Farmer[];
@@ -60,14 +60,21 @@ export default function SprayingSchedule({ farmers, seeds, seedDistributions, sp
           return { ...type, estDate, estDateRaw, record, isActive };
         });
 
+        let plantAge = 0;
+        if (dist.plantingDate) {
+          plantAge = differenceInDays(new Date(), parseISO(dist.plantingDate));
+        }
+
         return {
           ...dist,
           farmerName: farmer?.name || 'Unknown',
           village: farmer?.village || 'Unknown',
           groupName: farmer?.groupName || 'Unknown',
+          landAreaRu: farmer?.landAreaRu || 0,
           seedCompany: seed?.company || 'Unknown',
           seedVariety: seed?.variety || 'Unknown',
           seedName: seed ? `${seed.company} - ${seed.variety}` : 'Unknown',
+          plantAge,
           schedules,
           records
         };
@@ -223,9 +230,11 @@ export default function SprayingSchedule({ farmers, seeds, seedDistributions, sp
               <thead>
                 <tr className="bg-[#F8F9FA] border-b-2 border-[#DEE2E6]">
                   <th className="p-3 font-bold text-[#495057] border border-[#DEE2E6]">Petani</th>
+                  <th className="p-3 font-bold text-[#495057] border border-[#DEE2E6]">Luas Lahan (ru)</th>
                   <th className="p-3 font-bold text-[#495057] border border-[#DEE2E6]">Desa / Kelompok</th>
                   <th className="p-3 font-bold text-[#495057] border border-[#DEE2E6]">Benih</th>
                   <th className="p-3 font-bold text-[#495057] border border-[#DEE2E6]">Tgl Tanam</th>
+                  <th className="p-3 font-bold text-[#495057] border border-[#DEE2E6] text-center">Umur (HST)</th>
                   {SPRAYING_TYPES.map(type => (
                     <th key={type.id} className="p-3 font-bold text-[#495057] border border-[#DEE2E6] text-center">{type.name} ({type.age} HST)</th>
                   ))}
@@ -235,9 +244,11 @@ export default function SprayingSchedule({ farmers, seeds, seedDistributions, sp
                 {filteredPlantings.map(p => (
                   <tr key={p.id} className="border-b border-[#E9ECEF] hover:bg-gray-50">
                     <td className="p-3 border border-[#DEE2E6] font-medium">{p.farmerName}</td>
+                    <td className="p-3 border border-[#DEE2E6]">{p.landAreaRu}</td>
                     <td className="p-3 border border-[#DEE2E6]">{p.village} / {p.groupName}</td>
                     <td className="p-3 border border-[#DEE2E6]">{p.seedName}</td>
                     <td className="p-3 border border-[#DEE2E6]">{format(parseISO(p.plantingDate), 'dd MMM yyyy')}</td>
+                    <td className="p-3 border border-[#DEE2E6] text-center font-bold text-blue-600">{p.plantAge}</td>
                     {p.schedules.map(schedule => (
                       <td key={schedule.id} className="p-3 border border-[#DEE2E6] text-center align-top">
                         {!schedule.isActive ? (
@@ -271,7 +282,7 @@ export default function SprayingSchedule({ farmers, seeds, seedDistributions, sp
                 ))}
                 {filteredPlantings.length === 0 && (
                   <tr>
-                    <td colSpan={8} className="p-8 text-center text-[#6C757D] border border-[#DEE2E6]">Belum ada data jadwal penyemprotan. Pastikan Anda telah mencentang 'Gunakan Jadwal Penyemprotan' pada data distribusi benih.</td>
+                    <td colSpan={10} className="p-8 text-center text-[#6C757D] border border-[#DEE2E6]">Belum ada data jadwal penyemprotan. Pastikan Anda telah mencentang 'Gunakan Jadwal Penyemprotan' pada data distribusi benih.</td>
                   </tr>
                 )}
               </tbody>
@@ -305,6 +316,7 @@ export default function SprayingSchedule({ farmers, seeds, seedDistributions, sp
             <thead>
               <tr className="bg-[#F8F9FA] border-b-2 border-[#DEE2E6]">
                 <th className="p-3 font-bold text-[#495057] border border-[#DEE2E6]">Petani</th>
+                <th className="p-3 font-bold text-[#495057] border border-[#DEE2E6]">Luas Lahan (ru)</th>
                 <th className="p-3 font-bold text-[#495057] border border-[#DEE2E6]">Desa / Kelompok</th>
                 <th className="p-3 font-bold text-[#495057] border border-[#DEE2E6]">Benih</th>
                 <th className="p-3 font-bold text-[#495057] border border-[#DEE2E6]">Tgl Tanam</th>
@@ -317,6 +329,7 @@ export default function SprayingSchedule({ farmers, seeds, seedDistributions, sp
               {filteredPlantings.map(p => (
                 <tr key={p.id} className="border-b border-[#E9ECEF]">
                   <td className="p-3 border border-[#DEE2E6] font-medium">{p.farmerName}</td>
+                  <td className="p-3 border border-[#DEE2E6]">{p.landAreaRu}</td>
                   <td className="p-3 border border-[#DEE2E6]">{p.village} / {p.groupName}</td>
                   <td className="p-3 border border-[#DEE2E6]">{p.seedName}</td>
                   <td className="p-3 border border-[#DEE2E6]">{format(parseISO(p.plantingDate), 'dd/MM/yyyy')}</td>
