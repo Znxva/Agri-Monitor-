@@ -22,6 +22,7 @@ export default function SeedDistributions({ farmers, seeds, distributions, setDi
   });
 
   const [filterPeriod, setFilterPeriod] = useState('');
+  const [filterVillage, setFilterVillage] = useState('');
 
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
@@ -69,17 +70,29 @@ export default function SeedDistributions({ farmers, seeds, distributions, setDi
     });
   };
 
-  const filteredDist = filterPeriod 
-    ? distributions.filter(d => d.plantingPeriod === filterPeriod)
-    : distributions;
+  const filteredDist = distributions.filter(d => {
+    const farmer = farmers.find(f => f.id === d.farmerId);
+    if (filterPeriod && d.plantingPeriod !== filterPeriod) return false;
+    if (filterVillage && farmer?.village !== filterVillage) return false;
+    return true;
+  });
 
   const periods = Array.from(new Set(distributions.map(d => d.plantingPeriod)));
+  const villages = Array.from(new Set(farmers.map(f => f.village))).filter(Boolean).sort();
 
   return (
     <div className="p-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <h2 className="text-2xl font-bold text-[#212529]">Distribusi Benih</h2>
         <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+          <select 
+            className="px-4 py-2 border rounded-lg w-full sm:w-auto"
+            value={filterVillage}
+            onChange={e => setFilterVillage(e.target.value)}
+          >
+            <option value="">Semua Desa</option>
+            {villages.map(v => <option key={v} value={v}>{v}</option>)}
+          </select>
           <select 
             className="px-4 py-2 border rounded-lg w-full sm:w-auto"
             value={filterPeriod}
