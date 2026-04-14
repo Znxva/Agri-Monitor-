@@ -82,8 +82,21 @@ export default function FertilizerDistributions({ farmers, seeds, fertilizers, s
 
   const printData = useMemo(() => {
     if (!printDateFilter) return [];
-    return fertilizerDistributions.filter(fd => fd.createdAt.startsWith(printDateFilter));
-  }, [fertilizerDistributions, printDateFilter]);
+    return fertilizerDistributions.filter(fd => {
+      if (!fd.createdAt.startsWith(printDateFilter)) return false;
+      
+      const farmer = farmers.find(f => f.id === fd.farmerId);
+      const dist = seedDistributions.find(d => d.id === fd.seedDistributionId);
+      const seed = seeds.find(s => s.id === dist?.seedId);
+
+      if (filterVillage && farmer?.village !== filterVillage) return false;
+      if (filterGroup && farmer?.groupName !== filterGroup) return false;
+      if (filterCompany && seed?.company !== filterCompany) return false;
+      if (filterVariety && seed?.variety !== filterVariety) return false;
+
+      return true;
+    });
+  }, [fertilizerDistributions, printDateFilter, filterVillage, filterGroup, filterCompany, filterVariety, farmers, seedDistributions, seeds]);
 
   const totalFertilizerByDate = useMemo(() => {
     const totals: Record<string, number> = {};
