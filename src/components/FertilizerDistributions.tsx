@@ -236,6 +236,7 @@ export default function FertilizerDistributions({ farmers, seeds, fertilizers, s
               <tr className="bg-gray-100">
                 <th className="border border-black p-2 w-12 text-center">No</th>
                 <th className="border border-black p-2">Petani</th>
+                <th className="border border-black p-2">Desa / Kelompok</th>
                 <th className="border border-black p-2 text-center">Luas Lahan (ru)</th>
                 <th className="border border-black p-2">Jenis Jagung</th>
                 <th className="border border-black p-2">Pupuk Diterima</th>
@@ -260,7 +261,7 @@ export default function FertilizerDistributions({ farmers, seeds, fertilizers, s
                 if (sortedFarmerIds.length === 0) {
                   return (
                     <tr>
-                      <td colSpan={5} className="border border-black p-4 text-center text-gray-500">Tidak ada data distribusi pada tanggal ini.</td>
+                      <td colSpan={6} className="border border-black p-4 text-center text-gray-500">Tidak ada data distribusi pada tanggal ini.</td>
                     </tr>
                   );
                 }
@@ -275,6 +276,7 @@ export default function FertilizerDistributions({ farmers, seeds, fertilizers, s
                     <tr key={farmerId}>
                       <td className="border border-black p-2 text-center">{index + 1}</td>
                       <td className="border border-black p-2 font-bold">{farmer?.name}</td>
+                      <td className="border border-black p-2">{farmer?.village} / {farmer?.groupName}</td>
                       <td className="border border-black p-2 text-center">{farmer?.landAreaRu}</td>
                       <td className="border border-black p-2">{seed?.company} - {seed?.variety}</td>
                       <td className="border border-black p-2">
@@ -416,7 +418,7 @@ export default function FertilizerDistributions({ farmers, seeds, fertilizers, s
                                   {fd.status}
                                 </span>
                               </div>
-                              <div className="text-xs text-gray-500">Tahap: {fd.stage}</div>
+                              <div className="text-xs text-gray-500">Tahap: {fd.stage} | Tgl: {format(parseISO(fd.createdAt), 'dd MMM yyyy')}</div>
                               {fd.notes && <div className="text-xs text-gray-600 italic mt-1">"{fd.notes}"</div>}
                               
                               <div className="mt-3 flex justify-end gap-3 border-t border-[#E9ECEF] pt-2">
