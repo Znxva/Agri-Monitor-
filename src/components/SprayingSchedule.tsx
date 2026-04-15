@@ -2,6 +2,8 @@ import React, { useState, useMemo } from 'react';
 import { Farmer, SeedMaster, SeedDistribution, SprayingRecord } from '../types';
 import { Calendar, X, Edit2, Printer, Filter, Download, Droplets } from 'lucide-react';
 import { addDays, format, parseISO, differenceInDays } from 'date-fns';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface Props {
   farmers: Farmer[];
@@ -168,6 +170,31 @@ export default function SprayingSchedule({ farmers, seeds, seedDistributions, sp
     setShowPrintPreview(true);
   };
 
+  const downloadPDF = () => {
+    const doc = new jsPDF('landscape');
+    
+    doc.setFontSize(16);
+    doc.text('Jadwal Penyemprotan', 14, 15);
+    
+    doc.setFontSize(10);
+    let subtitle = '';
+    if (filterVillage) subtitle += `Desa: ${filterVillage} | `;
+    if (filterGroup) subtitle += `Kelompok: ${filterGroup} | `;
+    if (filterCompany) subtitle += `Perusahaan: ${filterCompany} | `;
+    if (filterVariety) subtitle += `Varietas: ${filterVariety}`;
+    if (subtitle) doc.text(subtitle, 14, 22);
+
+    autoTable(doc, { 
+      html: '#spraying-print-table', 
+      startY: subtitle ? 25 : 20, 
+      theme: 'grid', 
+      styles: { fontSize: 8, cellPadding: 2 },
+      headStyles: { fillColor: [248, 249, 250], textColor: [73, 80, 87], fontStyle: 'bold' }
+    });
+    
+    doc.save(`Jadwal_Penyemprotan_${format(new Date(), 'yyyyMMdd')}.pdf`);
+  };
+
   return (
     <div className="w-full">
       {!showPrintPreview ? (
@@ -296,9 +323,14 @@ export default function SprayingSchedule({ farmers, seeds, seedDistributions, sp
             <button onClick={() => setShowPrintPreview(false)} className="text-[#495057] hover:text-[#212529] flex items-center gap-2 font-medium">
               <X size={20} /> Tutup Preview
             </button>
-            <button onClick={() => window.print()} className="bg-[#2D6A4F] text-white px-6 py-2 rounded-lg flex items-center gap-2 hover:bg-[#1B4332] transition-colors shadow-sm font-bold">
-              <Printer size={20} /> Cetak Sekarang
-            </button>
+            <div className="flex gap-3">
+              <button onClick={downloadPDF} className="bg-red-600 text-white px-6 py-2 rounded-lg flex items-center gap-2 hover:bg-red-700 transition-colors shadow-sm font-bold">
+                <Download size={20} /> Download PDF
+              </button>
+              <button onClick={() => window.print()} className="bg-[#2D6A4F] text-white px-6 py-2 rounded-lg flex items-center gap-2 hover:bg-[#1B4332] transition-colors shadow-sm font-bold">
+                <Printer size={20} /> Cetak Sekarang
+              </button>
+            </div>
           </div>
           
           <div className="text-center mb-8">
@@ -312,7 +344,7 @@ export default function SprayingSchedule({ farmers, seeds, seedDistributions, sp
             </div>
           </div>
 
-          <table className="w-full text-left border-collapse text-sm">
+          <table id="spraying-print-table" className="w-full text-left border-collapse text-sm">
             <thead>
               <tr className="bg-[#F8F9FA] border-b-2 border-[#DEE2E6]">
                 <th className="p-3 font-bold text-[#495057] border border-[#DEE2E6]">Petani</th>

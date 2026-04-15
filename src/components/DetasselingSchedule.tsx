@@ -2,6 +2,8 @@ import React, { useState, useMemo } from 'react';
 import { Farmer, SeedMaster, SeedDistribution, DetasselingRecord } from '../types';
 import { Calendar, X, Edit2, Printer, Filter, Download } from 'lucide-react';
 import { addDays, format, parseISO, differenceInDays } from 'date-fns';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface Props {
   farmers: Farmer[];
@@ -205,6 +207,31 @@ export default function DetasselingSchedule({ farmers, seeds, seedDistributions,
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const downloadPDF = () => {
+    const doc = new jsPDF('landscape');
+    
+    doc.setFontSize(16);
+    doc.text('Jadwal Detasseling & Panen', 14, 15);
+    
+    doc.setFontSize(10);
+    let subtitle = '';
+    if (filterVillage) subtitle += `Desa: ${filterVillage} | `;
+    if (filterGroup) subtitle += `Kelompok: ${filterGroup} | `;
+    if (filterCompany) subtitle += `Perusahaan: ${filterCompany} | `;
+    if (filterVariety) subtitle += `Varietas: ${filterVariety}`;
+    if (subtitle) doc.text(subtitle, 14, 22);
+
+    autoTable(doc, { 
+      html: '#detasseling-print-table', 
+      startY: subtitle ? 25 : 20, 
+      theme: 'grid', 
+      styles: { fontSize: 8, cellPadding: 2 },
+      headStyles: { fillColor: [248, 249, 250], textColor: [73, 80, 87], fontStyle: 'bold' }
+    });
+    
+    doc.save(`Jadwal_Detasseling_${format(new Date(), 'yyyyMMdd')}.pdf`);
   };
 
   return (
@@ -451,6 +478,9 @@ export default function DetasselingSchedule({ farmers, seeds, seedDistributions,
                   <button onClick={() => setShowPrintPreview(false)} className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-bold flex items-center gap-2 transition-colors">
                     <X size={18}/> Tutup Preview
                   </button>
+                  <button onClick={downloadPDF} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-bold flex items-center gap-2 transition-colors shadow-sm">
+                    <Download size={18} /> Download PDF
+                  </button>
                   <button onClick={downloadCSV} className="px-4 py-2 bg-[#2D6A4F] text-white rounded-lg hover:bg-[#1B4332] font-bold flex items-center gap-2 transition-colors shadow-sm">
                     <Download size={18} /> Download CSV (Excel)
                   </button>
@@ -471,7 +501,7 @@ export default function DetasselingSchedule({ farmers, seeds, seedDistributions,
                 </p>
               </div>
 
-              <table className="w-full border-collapse border border-black text-[11px]">
+              <table id="detasseling-print-table" className="w-full border-collapse border border-black text-[11px]">
                 <thead>
                   <tr className="bg-gray-100">
                     <th className="border border-black p-2 text-center w-8">No</th>
