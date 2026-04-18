@@ -425,7 +425,7 @@ export default function WorkerAttendance({ farmers, seeds, seedDistributions, de
                   .map(p => p.farmerName);
                 
                 const uniqueFarmers = Array.from(new Set(matchingFarmers));
-                const farmerListStr = uniqueFarmers.length > 0 ? uniqueFarmers.join(', ') : '...........................................';
+                const farmerListStr = '..................................................................................................................................';
 
                 const startDate = weeklyFormData.startDate ? parseISO(weeklyFormData.startDate) : new Date();
                 const days = Array.from({ length: 7 }).map((_, i) => addDays(startDate, i));
@@ -538,7 +538,7 @@ export default function WorkerAttendance({ farmers, seeds, seedDistributions, de
                         <div>
                           <table className="w-full">
                             <tbody>
-                              <tr><td className="w-32 font-bold py-1">Nama Petani</td><td className="w-4">:</td><td className="font-bold">{farmer?.name || '...........................................'}</td></tr>
+                              <tr><td className="w-32 font-bold py-1">Nama Petani</td><td className="w-4">:</td><td className="font-bold">{'..................................................................................................................................'}</td></tr>
                               <tr><td className="font-bold py-1">Desa / Kelompok</td><td>:</td><td>{farmer ? `${farmer.village} / ${farmer.groupName}` : '...........................................'}</td></tr>
                               <tr><td className="font-bold py-1">Perusahaan / Varietas</td><td>:</td><td>{seed ? `${seed.company} / ${seed.variety}` : '...........................................'}</td></tr>
                             </tbody>

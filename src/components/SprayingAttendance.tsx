@@ -310,7 +310,7 @@ export default function SprayingAttendance({ farmers, seeds, seedDistributions, 
                   .map(p => p.farmerName);
                 
                 const uniqueFarmers = Array.from(new Set(matchingFarmers));
-                const farmerListStr = uniqueFarmers.length > 0 ? uniqueFarmers.join(', ') : '...........................................';
+                const farmerListStr = '..................................................................................................................................';
 
                 const startDate = weeklyFormData.startDate ? parseISO(weeklyFormData.startDate) : new Date();
                 const days = Array.from({ length: 7 }).map((_, i) => addDays(startDate, i));
