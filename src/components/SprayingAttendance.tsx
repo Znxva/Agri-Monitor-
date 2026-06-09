@@ -353,6 +353,7 @@ export default function SprayingAttendance({ farmers, seeds, seedDistributions, 
                             </th>
                           ))}
                           <th className="border border-black p-2 text-center w-16">Total<br/>Hari</th>
+                          <th className="border border-black p-2 text-center w-32">Tanda Terima /<br/>Tanda Tangan</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -364,6 +365,9 @@ export default function SprayingAttendance({ farmers, seeds, seedDistributions, 
                               <td key={i} className="border border-black p-2"></td>
                             ))}
                             <td className="border border-black p-2"></td>
+                            <td className="border border-black p-2 relative text-left h-8">
+                              <span className="text-[10px] text-gray-500 absolute top-1 left-2">{wIndex + 1}.</span>
+                            </td>
                           </tr>
                         ))}
                       </tbody>

@@ -455,7 +455,7 @@ export default function WorkerAttendance({ farmers, seeds, seedDistributions, de
                       </div>
                     </div>
 
-                    <table className="w-full border-collapse border border-black text-[12px]">
+                     <table className="w-full border-collapse border border-black text-[12px]">
                       <thead>
                         <tr className="bg-gray-100">
                           <th className="border border-black p-2 text-center w-8" rowSpan={2}>No</th>
@@ -469,6 +469,7 @@ export default function WorkerAttendance({ farmers, seeds, seedDistributions, de
                           <th className="border border-black p-2 text-center w-12" rowSpan={2}>Total<br/>Hari</th>
                           <th className="border border-black p-2 text-center w-12" rowSpan={2}>Total<br/>Lembur</th>
                           <th className="border border-black p-2 text-center w-20" rowSpan={2}>Total<br/>Pembayaran</th>
+                          <th className="border border-black p-2 text-center w-32" rowSpan={2}>Tanda Terima /<br/>Tanda Tangan</th>
                         </tr>
                         <tr className="bg-gray-100">
                           {days.map((_, i) => (
@@ -493,6 +494,9 @@ export default function WorkerAttendance({ farmers, seeds, seedDistributions, de
                             <td className="border border-black p-2"></td>
                             <td className="border border-black p-2"></td>
                             <td className="border border-black p-2"></td>
+                            <td className="border border-black p-2 relative text-left h-8">
+                              <span className="text-[10px] text-gray-500 absolute top-1 left-2">{wIndex + 1}.</span>
+                            </td>
                           </tr>
                         ))}
                       </tbody>
