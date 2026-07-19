@@ -80,7 +80,7 @@ export default function SprayingSchedule({ farmers, seeds, seedDistributions, sp
           schedules,
           records
         };
-      }).sort((a, b) => new Date(b.plantingDate).getTime() - new Date(a.plantingDate).getTime());
+      }).sort((a, b) => new Date(a.plantingDate).getTime() - new Date(b.plantingDate).getTime());
   }, [seedDistributions, farmers, seeds, sprayingRecords]);
 
   // Filter Options
@@ -173,23 +173,34 @@ export default function SprayingSchedule({ farmers, seeds, seedDistributions, sp
   const downloadPDF = () => {
     const doc = new jsPDF('landscape');
     
-    doc.setFontSize(16);
-    doc.text('Jadwal Penyemprotan', 14, 15);
+    // Header
+    doc.setFontSize(18);
+    doc.setTextColor(30, 64, 175); // Dark blue header
+    doc.setFont("helvetica", "bold");
+    doc.text('Jadwal Pelaksanaan Penyemprotan', 14, 18);
     
+    doc.setDrawColor(37, 99, 235); // Blue line
+    doc.setLineWidth(0.5);
+    doc.line(14, 22, doc.internal.pageSize.width - 14, 22);
+    
+    // Subtitle
     doc.setFontSize(10);
+    doc.setTextColor(100, 116, 139); // Slate-500
+    doc.setFont("helvetica", "normal");
     let subtitle = '';
     if (filterVillage) subtitle += `Desa: ${filterVillage} | `;
     if (filterGroup) subtitle += `Kelompok: ${filterGroup} | `;
     if (filterCompany) subtitle += `Perusahaan: ${filterCompany} | `;
     if (filterVariety) subtitle += `Varietas: ${filterVariety}`;
-    if (subtitle) doc.text(subtitle, 14, 22);
+    if (subtitle) doc.text(subtitle, 14, 28);
 
     autoTable(doc, { 
       html: '#spraying-print-table', 
-      startY: subtitle ? 25 : 20, 
-      theme: 'grid', 
-      styles: { fontSize: 8, cellPadding: 2 },
-      headStyles: { fillColor: [248, 249, 250], textColor: [73, 80, 87], fontStyle: 'bold' }
+      startY: subtitle ? 32 : 26, 
+      theme: 'striped', 
+      styles: { fontSize: 8, cellPadding: 3, textColor: [30, 41, 59] },
+      headStyles: { fillColor: [37, 99, 235], textColor: [255, 255, 255], fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: [241, 245, 249] }
     });
     
     doc.save(`Jadwal_Penyemprotan_${format(new Date(), 'yyyyMMdd')}.pdf`);

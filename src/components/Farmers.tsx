@@ -216,7 +216,7 @@ export default function Farmers({ farmers, setFarmers, villages, groups, seeds, 
                   const seed = seeds.find(s => s.id === sd.seedId);
                   const ferts = fertilizerDistributions.filter(fd => fd.seedDistributionId === sd.id);
                   const plantAge = differenceInDays(new Date(), parseISO(sd.plantingDate));
-                  const estimatedHarvest = addDays(parseISO(sd.plantingDate), seed?.estimatedHarvestDays || 0);
+                  const estimatedHarvest = addDays(parseISO(sd.plantingDate), seed?.harvestDays || 110);
                   
                   return (
                     <div key={sd.id} className="bg-white border border-[#DEE2E6] rounded-xl overflow-hidden shadow-sm">

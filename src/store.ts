@@ -26,7 +26,7 @@ export function useStore() {
         const { data, error } = await supabase.from('app_state').select('*');
         
         if (error) {
-          console.error('Error loading from Supabase:', error);
+          console.warn('Fallback to local storage due to Supabase error:', error.message);
           setSyncStatus('error');
           loadLocal();
           setIsLoaded(true);

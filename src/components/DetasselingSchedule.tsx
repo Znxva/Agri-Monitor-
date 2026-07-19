@@ -85,7 +85,7 @@ export default function DetasselingSchedule({ farmers, seeds, seedDistributions,
         estHarvest_raw,
         records
       };
-    }).sort((a, b) => new Date(b.plantingDate).getTime() - new Date(a.plantingDate).getTime());
+    }).sort((a, b) => new Date(a.plantingDate).getTime() - new Date(b.plantingDate).getTime());
   }, [seedDistributions, farmers, seeds, detasselingRecords]);
 
   // Filter Options
@@ -212,23 +212,37 @@ export default function DetasselingSchedule({ farmers, seeds, seedDistributions,
   const downloadPDF = () => {
     const doc = new jsPDF('landscape');
     
-    doc.setFontSize(16);
-    doc.text('Jadwal Detasseling & Panen', 14, 15);
+    // Header
+    const pageWidth = doc.internal.pageSize.width;
+    doc.setFontSize(20);
+    doc.setTextColor(27, 67, 50); // Dark Green #1B4332
+    doc.setFont("helvetica", "bold");
+    doc.text('Laporan Jadwal Detasseling & Panen', pageWidth / 2, 20, { align: 'center' });
+    
+    doc.setDrawColor(45, 106, 79); // Green #2D6A4F
+    doc.setLineWidth(1);
+    doc.line(14, 26, pageWidth - 14, 26);
     
     doc.setFontSize(10);
+    doc.setTextColor(108, 117, 125); // Gray #6C757D
+    doc.setFont("helvetica", "normal");
     let subtitle = '';
     if (filterVillage) subtitle += `Desa: ${filterVillage} | `;
     if (filterGroup) subtitle += `Kelompok: ${filterGroup} | `;
     if (filterCompany) subtitle += `Perusahaan: ${filterCompany} | `;
     if (filterVariety) subtitle += `Varietas: ${filterVariety}`;
-    if (subtitle) doc.text(subtitle, 14, 22);
+    if (subtitle) doc.text(subtitle, pageWidth / 2, 32, { align: 'center' });
 
     autoTable(doc, { 
       html: '#detasseling-print-table', 
-      startY: subtitle ? 25 : 20, 
+      startY: subtitle ? 38 : 32, 
       theme: 'grid', 
-      styles: { fontSize: 8, cellPadding: 2 },
-      headStyles: { fillColor: [248, 249, 250], textColor: [73, 80, 87], fontStyle: 'bold' }
+      styles: { fontSize: 8, cellPadding: 2, lineColor: [45, 106, 79], lineWidth: 0.1 },
+      headStyles: { fillColor: [45, 106, 79], textColor: [255, 255, 255], fontStyle: 'bold', halign: 'center' },
+      columnStyles: {
+        0: { halign: 'center' },
+        2: { halign: 'center' }
+      }
     });
     
     doc.save(`Jadwal_Detasseling_${format(new Date(), 'yyyyMMdd')}.pdf`);
